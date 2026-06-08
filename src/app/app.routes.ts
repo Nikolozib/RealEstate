@@ -17,6 +17,7 @@ export const routes: Routes = [
   { path: 'contact', component: Contact },
   { path: 'favorites', component: Favorites, canActivate: [authGuard] },
   { path: 'listings', component: Listings },
+  { path: 'listings/:id', component: PropertyDetail },
   {
     path: 'auth',
     children: [
@@ -26,6 +27,5 @@ export const routes: Routes = [
     ],
   },
   { path: 'profile', component: Profile, canActivate: [authGuard] },
-  { path: 'property-detail', component: PropertyDetail, canActivate: [authGuard] },
   { path: '**', component: NotFound },
 ];

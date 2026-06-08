@@ -1,14 +1,31 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { Footer } from './Components/shared/footer/footer';
+import { Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { Header } from './Components/shared/header/header';
+import { Footer } from './Components/shared/footer/footer';
+import * as AOS from 'aos';
 
 @Component({
   selector: 'app-root',
-  imports: [Header, RouterOutlet, Footer],
+  standalone: true,
+  imports: [RouterOutlet, Header, Footer],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class App {
-  protected readonly title = signal('RealEstate');
+export class AppComponent implements OnInit {
+  constructor(private router: Router) {
+    this.router.events.pipe(
+      filter(e => e instanceof NavigationEnd)
+    ).subscribe(() => window.scrollTo(0, 0));
+  }
+
+  ngOnInit() {
+    AOS.init({
+      duration: 800,
+      easing: 'ease-in-out',
+      once: true,
+      offset: 80
+    });
+  }
 }
