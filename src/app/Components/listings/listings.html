@@ -1,1 +1,227 @@
-<p>listings works!</p>
+<!-- PAGE HERO -->
+<section class="listings-hero">
+  <div class="listings-hero__overlay"></div>
+  <div class="listings-hero__content">
+    <span class="listings-hero__label">Browse our collection</span>
+    <h1 class="listings-hero__title">All Properties</h1>
+    <p class="listings-hero__sub">Find your perfect home from our verified listings across Georgia</p>
+  </div>
+</section>
+
+<!-- SEARCH + FILTER BAR -->
+<section class="filter-bar">
+  <div class="filter-bar__container">
+
+    <div class="filter-bar__search">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input
+        type="text"
+        placeholder="Search by title, city, district..."
+        [(ngModel)]="searchQuery"
+        (ngModelChange)="applyFilters()"
+        class="filter-bar__input"
+      />
+      @if (searchQuery) {
+        <button class="filter-bar__clear-search" (click)="searchQuery=''; applyFilters()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      }
+    </div>
+
+    <div class="filter-bar__selects">
+      <select [(ngModel)]="selectedPriceType" (ngModelChange)="applyFilters()" class="filter-bar__select">
+        @for (opt of priceTypes; track opt.value) {
+          <option [value]="opt.value">{{ opt.label }}</option>
+        }
+      </select>
+
+      <select [(ngModel)]="selectedPropertyType" (ngModelChange)="applyFilters()" class="filter-bar__select">
+        @for (opt of propertyTypes; track opt.value) {
+          <option [value]="opt.value">{{ opt.label }}</option>
+        }
+      </select>
+
+      <select [(ngModel)]="selectedCity" (ngModelChange)="applyFilters()" class="filter-bar__select">
+        @for (opt of cities; track opt.value) {
+          <option [value]="opt.value">{{ opt.label }}</option>
+        }
+      </select>
+
+      <button class="filter-bar__more-btn" (click)="toggleFilters()" [class.active]="filtersOpen">
+        <i class="fa-solid fa-sliders"></i>
+        More Filters
+        @if (activeFilterCount > 0) {
+          <span class="filter-bar__badge">{{ activeFilterCount }}</span>
+        }
+      </button>
+    </div>
+
+  </div>
+
+  <!-- EXPANDED FILTERS -->
+  @if (filtersOpen) {
+    <div class="filter-bar__expanded">
+      <div class="filter-bar__container">
+
+        <div class="filter-bar__group">
+          <label class="filter-bar__label">Bedrooms</label>
+          <div class="filter-bar__chips">
+            @for (opt of bedroomOptions; track opt.value) {
+              <button
+                class="filter-chip"
+                [class.active]="selectedBedrooms === opt.value"
+                (click)="selectedBedrooms = opt.value; applyFilters()">
+                {{ opt.label }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="filter-bar__group">
+          <label class="filter-bar__label">Min Price ($)</label>
+          <input
+            type="number"
+            placeholder="e.g. 50000"
+            [(ngModel)]="minPrice"
+            (ngModelChange)="applyFilters()"
+            class="filter-bar__input-sm"
+          />
+        </div>
+
+        <div class="filter-bar__group">
+          <label class="filter-bar__label">Max Price ($)</label>
+          <input
+            type="number"
+            placeholder="e.g. 300000"
+            [(ngModel)]="maxPrice"
+            (ngModelChange)="applyFilters()"
+            class="filter-bar__input-sm"
+          />
+        </div>
+
+        @if (activeFilterCount > 0) {
+          <button class="filter-bar__reset" (click)="clearFilters()">
+            <i class="fa-solid fa-rotate-left"></i> Clear All
+          </button>
+        }
+
+      </div>
+    </div>
+  }
+</section>
+
+<!-- RESULTS HEADER -->
+<section class="listings-main">
+  <div class="listings-main__container">
+
+    <div class="listings-main__header">
+      <p class="listings-main__count">
+        @if (loading) {
+          Loading properties...
+        } @else {
+          <strong>{{ filteredProperties.length }}</strong> {{ filteredProperties.length === 1 ? 'property' : 'properties' }} found
+          @if (activeFilterCount > 0) {
+            <button class="listings-main__clear" (click)="clearFilters()">
+              Clear filters <i class="fa-solid fa-xmark"></i>
+            </button>
+          }
+        }
+      </p>
+
+      <div class="listings-main__sort">
+        <label class="listings-main__sort-label">
+          <i class="fa-solid fa-arrow-up-wide-short"></i> Sort:
+        </label>
+        <select [(ngModel)]="sortBy" (ngModelChange)="applyFilters()" class="listings-main__sort-select">
+          @for (opt of sortOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <!-- LOADING SKELETONS -->
+    @if (loading) {
+      <div class="listings-grid">
+        @for (i of [1,2,3,4,5,6]; track i) {
+          <div class="skeleton-card">
+            <div class="skeleton-img"></div>
+            <div class="skeleton-body">
+              <div class="skeleton-line wide"></div>
+              <div class="skeleton-line medium"></div>
+              <div class="skeleton-line short"></div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- PROPERTY GRID -->
+    @if (!loading && filteredProperties.length > 0) {
+      <div class="listings-grid">
+        @for (property of filteredProperties; track property.id; let i = $index) {
+          <a
+            [routerLink]="['/listings', property.id]"
+            class="property-card"
+            data-aos="fade-up"
+            [attr.data-aos-delay]="(i % 3) * 100">
+
+            <div class="property-card__img-wrap">
+              <img
+                [src]="property.thumbnailUrl"
+                [alt]="property.title"
+                class="property-card__img"
+                loading="lazy"
+              />
+              <span class="property-card__badge" [class.rent]="property.priceType === 'rent'">
+                {{ property.priceType === 'rent' ? 'For Rent' : 'For Sale' }}
+              </span>
+              @if (property.isFeatured) {
+                <span class="property-card__featured">
+                  <i class="fa-solid fa-star"></i> Featured
+                </span>
+              }
+              <div class="property-card__overlay">
+                <span>View Details <i class="fa-solid fa-arrow-right"></i></span>
+              </div>
+            </div>
+
+            <div class="property-card__body">
+              <div class="property-card__top">
+                <span class="property-card__type">{{ property.propertyType }}</span>
+                <span class="property-card__price">{{ formatPrice(property.price, property.priceType) }}</span>
+              </div>
+              <h3 class="property-card__title">{{ property.title }}</h3>
+              <p class="property-card__location">
+                <i class="fa-solid fa-location-dot"></i>
+                {{ property.district }}, {{ property.city }}
+              </p>
+              <div class="property-card__meta">
+                @if (property.bedrooms > 0) {
+                  <span><i class="fa-solid fa-bed"></i> {{ property.bedrooms }} Beds</span>
+                }
+                @if (property.bathrooms > 0) {
+                  <span><i class="fa-solid fa-bath"></i> {{ property.bathrooms }} Baths</span>
+                }
+                <span><i class="fa-solid fa-vector-square"></i> {{ property.area }} m²</span>
+              </div>
+            </div>
+          </a>
+        }
+      </div>
+    }
+
+    <!-- EMPTY STATE -->
+    @if (!loading && filteredProperties.length === 0) {
+      <div class="listings-empty" data-aos="fade-up">
+        <i class="fa-solid fa-house-circle-xmark"></i>
+        <h3>No properties found</h3>
+        <p>Try adjusting your filters or search query to find what you're looking for.</p>
+        <button class="btn btn--primary" (click)="clearFilters()">
+          <i class="fa-solid fa-rotate-left"></i> Clear All Filters
+        </button>
+      </div>
+    }
+
+  </div>
+</section>

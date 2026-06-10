@@ -6,6 +6,11 @@
     "analytics": "fc44f609-0609-4ee5-bd16-329a89387baa"
   },
   "newProjectRoot": "projects",
+  "schematics": {
+    "@schematics/angular:component": {
+      "style": "scss"
+    }
+  },
   "projects": {
     "RealEstate": {
       "projectType": "application",

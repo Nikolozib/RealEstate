@@ -1,1 +1,45 @@
-<p>header works!</p>
+<header class="header" [class.scrolled]="isScrolled">
+  <div class="header__container">
+
+    <a routerLink="/" class="header__logo" (click)="closeMenu()">
+      <i class="fa-solid fa-building-columns"></i>
+      <div class="header__logo-text">
+        <span class="header__logo-name">RealEstate</span>
+        <span class="header__logo-sub">Georgia</span>
+      </div>
+    </a>
+
+    <nav class="header__nav" [class.open]="isMenuOpen">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" class="header__link" (click)="closeMenu()">Home</a>
+      <a routerLink="/listings" routerLinkActive="active" class="header__link" (click)="closeMenu()">Properties</a>
+      <a routerLink="/about" routerLinkActive="active" class="header__link" (click)="closeMenu()">About</a>
+      <a routerLink="/contact" routerLinkActive="active" class="header__link" (click)="closeMenu()">Contact</a>
+
+      @if (!isLoggedIn) {
+        <div class="header__nav-auth">
+          <a routerLink="/auth/login" class="header__btn header__btn--ghost" (click)="closeMenu()">Sign In</a>
+          <a routerLink="/auth/register" class="header__btn header__btn--primary" (click)="closeMenu()">Get Started</a>
+        </div>
+      }
+
+      @if (isLoggedIn) {
+        <div class="header__nav-auth">
+          <a routerLink="/favorites" class="header__link" (click)="closeMenu()">
+            <i class="fa-regular fa-heart"></i> Saved
+          </a>
+          <a routerLink="/profile" class="header__link" (click)="closeMenu()">
+            <i class="fa-regular fa-user"></i> Profile
+          </a>
+          <button class="header__btn header__btn--ghost" (click)="logout()">Sign Out</button>
+        </div>
+      }
+    </nav>
+
+    <button class="header__hamburger" (click)="toggleMenu()" [class.open]="isMenuOpen" aria-label="Toggle menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+  </div>
+</header>

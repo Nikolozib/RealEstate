@@ -1,0 +1,264 @@
+$primary: #1a4a3a;
+$primary-dark: #112e24;
+$primary-darker: #0b1f19;
+$secondary: #c8975a;
+$white: #ffffff;
+$text-muted: rgba(255, 255, 255, 0.55);
+$text-light: rgba(255, 255, 255, 0.75);
+$border: rgba(255, 255, 255, 0.1);
+$transition: all 0.3s ease;
+
+.footer {
+  background: $primary-dark;
+  color: $white;
+
+  &__main {
+    padding: 72px 0 48px;
+  }
+
+  &__container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 32px;
+    display: grid;
+    grid-template-columns: 1.8fr 1fr 1fr 1.4fr;
+    gap: 48px;
+  }
+
+  &__brand {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  &__logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    cursor: pointer;
+
+    i {
+      font-size: 28px;
+      color: $secondary;
+    }
+
+    div {
+      display: flex;
+      flex-direction: column;
+      line-height: 1;
+    }
+  }
+
+  &__logo-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: $white;
+    letter-spacing: 0.02em;
+  }
+
+  &__logo-sub {
+    font-size: 10px;
+    color: $secondary;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  &__tagline {
+    font-size: 14px;
+    line-height: 1.7;
+    color: $text-muted;
+    max-width: 300px;
+  }
+
+  &__social {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  &__social-link {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid $border;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $text-light;
+    text-decoration: none;
+    transition: $transition;
+    cursor: pointer;
+
+    i {
+      font-size: 14px;
+    }
+
+    &:hover {
+      background: $secondary;
+      border-color: $secondary;
+      color: $white;
+      transform: translateY(-2px);
+    }
+  }
+
+  &__col {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  &__col-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: $white;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding-bottom: 12px;
+    border-bottom: 1px solid $border;
+  }
+
+  &__links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  &__link {
+    font-size: 14px;
+    color: $text-muted;
+    text-decoration: none;
+    transition: $transition;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    &:hover {
+      color: $secondary;
+      padding-left: 4px;
+    }
+  }
+
+  &__contact {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+
+    li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+
+      i {
+        font-size: 13px;
+        color: $secondary;
+        margin-top: 2px;
+        flex-shrink: 0;
+        width: 14px;
+      }
+
+      span, a {
+        font-size: 14px;
+        color: $text-muted;
+        line-height: 1.5;
+      }
+    }
+  }
+
+  &__bottom {
+    border-top: 1px solid $border;
+    padding: 20px 0;
+    background: $primary-darker;
+  }
+
+  &__bottom-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    grid-template-columns: unset;
+  }
+
+  &__copy {
+    font-size: 13px;
+    color: $text-muted;
+  }
+
+  &__bottom-links {
+    display: flex;
+    gap: 24px;
+  }
+
+  &__bottom-link {
+    font-size: 13px;
+    color: $text-muted;
+    text-decoration: none;
+    transition: $transition;
+    cursor: pointer;
+
+    &:hover {
+      color: $secondary;
+    }
+  }
+}
+
+@media (max-width: 1024px) {
+  .footer {
+    &__container {
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+    }
+
+    &__brand {
+      grid-column: 1 / -1;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 32px;
+    }
+
+    &__tagline {
+      max-width: 100%;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .footer {
+    &__main {
+      padding: 48px 0 32px;
+    }
+
+    &__container {
+      grid-template-columns: 1fr;
+      gap: 32px;
+      padding: 0 20px;
+    }
+
+    &__brand {
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    &__bottom-inner {
+      flex-direction: column;
+      text-align: center;
+      padding: 0 20px;
+    }
+
+    &__bottom-links {
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+  }
+}

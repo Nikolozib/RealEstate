@@ -4,6 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-property-detail',
   imports: [],
   templateUrl: './property-detail.html',
-  styleUrl: './property-detail.css',
+  styleUrl: './property-detail.scss',
 })
 export class PropertyDetail {}

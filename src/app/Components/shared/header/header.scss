@@ -1,0 +1,226 @@
+$primary: #1a4a3a;
+$primary-light: #2d6e57;
+$secondary: #c8975a;
+$white: #ffffff;
+$text-muted: rgba(255, 255, 255, 0.7);
+$transition: all 0.3s ease;
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  padding: 20px 0;
+  background: transparent;
+  transition: $transition;
+
+  &.scrolled {
+    background: $primary;
+    padding: 14px 0;
+    box-shadow: 0 2px 24px rgba(0, 0, 0, 0.15);
+  }
+
+  &__container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+  }
+
+  &__logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    cursor: pointer;
+
+    i {
+      font-size: 26px;
+      color: $secondary;
+    }
+  }
+
+  &__logo-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+  }
+
+  &__logo-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: $white;
+    letter-spacing: 0.02em;
+  }
+
+  &__logo-sub {
+    font-size: 10px;
+    color: $secondary;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  &__nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    justify-content: center;
+  }
+
+  &__link {
+    font-size: 14px;
+    font-weight: 500;
+    color: $text-muted;
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    transition: $transition;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    i {
+      font-size: 13px;
+    }
+
+    &:hover {
+      color: $white;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    &.active {
+      color: $white;
+      font-weight: 600;
+    }
+  }
+
+  &__nav-auth {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 16px;
+    padding-left: 16px;
+    border-left: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  &__btn {
+    font-size: 14px;
+    font-weight: 500;
+    padding: 9px 20px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: $transition;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    &--ghost {
+      background: transparent;
+      color: $white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.6);
+      }
+    }
+
+    &--primary {
+      background: $secondary;
+      color: $white;
+      border: 1px solid $secondary;
+
+      &:hover {
+        background: darken($secondary, 8%);
+        border-color: darken($secondary, 8%);
+        transform: translateY(-1px);
+      }
+    }
+  }
+
+  &__hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+
+    span {
+      display: block;
+      width: 24px;
+      height: 2px;
+      background: $white;
+      border-radius: 2px;
+      transition: $transition;
+    }
+
+    &.open {
+      span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+      span:nth-child(2) { opacity: 0; }
+      span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .header {
+    background: $primary;
+    padding: 14px 0;
+
+    &__nav {
+      display: none;
+      position: fixed;
+      top: 62px;
+      left: 0;
+      width: 100%;
+      background: $primary;
+      flex-direction: column;
+      align-items: stretch;
+      padding: 16px 24px 24px;
+      gap: 4px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+
+      &.open {
+        display: flex;
+      }
+    }
+
+    &__link {
+      padding: 12px 16px;
+      font-size: 15px;
+    }
+
+    &__nav-auth {
+      flex-direction: column;
+      margin-left: 0;
+      padding-left: 0;
+      border-left: none;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      padding-top: 16px;
+      margin-top: 8px;
+      gap: 8px;
+    }
+
+    &__btn {
+      width: 100%;
+      justify-content: center;
+      padding: 12px 20px;
+    }
+
+    &__hamburger {
+      display: flex;
+    }
+  }
+}

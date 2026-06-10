@@ -11,7 +11,7 @@ import * as AOS from 'aos';
   standalone: true,
   imports: [RouterOutlet, Header, Footer],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrl: './app.scss'
 })
 export class AppComponent implements OnInit {
   constructor(private router: Router) {
