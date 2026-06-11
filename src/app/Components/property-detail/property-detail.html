@@ -1,1 +1,250 @@
-<p>property-detail works!</p>
+<!-- LOADING -->
+@if (loading) {
+  <div class="detail-loading">
+    <div class="detail-loading__spinner">
+      <i class="fa-solid fa-spinner fa-spin"></i>
+    </div>
+    <p>Loading property...</p>
+  </div>
+}
+
+<!-- NOT FOUND -->
+@if (!loading && notFound) {
+  <div class="detail-notfound">
+    <i class="fa-solid fa-house-circle-xmark"></i>
+    <h2>Property Not Found</h2>
+    <p>This listing may have been removed or the link is incorrect.</p>
+    <a routerLink="/listings" class="btn btn--primary">Back to Listings</a>
+  </div>
+}
+
+<!-- PROPERTY DETAIL -->
+@if (!loading && property) {
+
+  <!-- BREADCRUMB -->
+  <div class="breadcrumb">
+    <div class="breadcrumb__container">
+      <a routerLink="/" class="breadcrumb__link">Home</a>
+      <i class="fa-solid fa-chevron-right"></i>
+      <a routerLink="/listings" class="breadcrumb__link">Properties</a>
+      <i class="fa-solid fa-chevron-right"></i>
+      <span class="breadcrumb__current">{{ property.title }}</span>
+    </div>
+  </div>
+
+  <div class="detail">
+    <div class="detail__container">
+
+      <!-- LEFT COLUMN -->
+      <div class="detail__main">
+
+        <!-- GALLERY -->
+        <div class="detail__gallery" data-aos="fade-up">
+          <div class="detail__gallery-main" (click)="openLightbox(activeImage)">
+            <img [src]="activeImage" [alt]="property.title" class="detail__gallery-img" />
+            <div class="detail__gallery-zoom">
+              <i class="fa-solid fa-magnifying-glass-plus"></i>
+            </div>
+            <span class="detail__badge" [class.rent]="property.priceType === 'rent'">
+              {{ property.priceType === 'rent' ? 'For Rent' : 'For Sale' }}
+            </span>
+          </div>
+
+          @if (getAllImages().length > 1) {
+            <div class="detail__gallery-thumbs">
+              @for (img of getAllImages(); track img) {
+                <div
+                  class="detail__gallery-thumb"
+                  [class.active]="img === activeImage"
+                  (click)="setActiveImage(img)">
+                  <img [src]="img" alt="thumbnail" />
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- TITLE + META -->
+        <div class="detail__header" data-aos="fade-up">
+          <div class="detail__header-top">
+            <span class="detail__type">{{ property.propertyType }}</span>
+            <span class="detail__status" [class.available]="property.status === 'available'">
+              <i class="fa-solid fa-circle"></i>
+              {{ property.status }}
+            </span>
+          </div>
+          <h1 class="detail__title">{{ property.title }}</h1>
+          <p class="detail__location">
+            <i class="fa-solid fa-location-dot"></i>
+            {{ property.address }}, {{ property.district }}, {{ property.city }}
+          </p>
+          <div class="detail__quick-meta">
+            @if (property.bedrooms > 0) {
+              <span><i class="fa-solid fa-bed"></i> {{ property.bedrooms }} Bedrooms</span>
+            }
+            @if (property.bathrooms > 0) {
+              <span><i class="fa-solid fa-bath"></i> {{ property.bathrooms }} Bathrooms</span>
+            }
+            <span><i class="fa-solid fa-vector-square"></i> {{ property.area }} m²</span>
+            <span><i class="fa-solid fa-eye"></i> {{ property.views }} views</span>
+          </div>
+        </div>
+
+        <!-- DETAILS GRID -->
+        <div class="detail__section" data-aos="fade-up">
+          <h2 class="detail__section-title">Property Details</h2>
+          <div class="detail__grid">
+            @for (item of getDetails(); track item.label) {
+              <div class="detail__grid-item">
+                <i [class]="item.icon"></i>
+                <div>
+                  <span class="detail__grid-label">{{ item.label }}</span>
+                  <span class="detail__grid-value">{{ item.value }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- DESCRIPTION -->
+        <div class="detail__section" data-aos="fade-up">
+          <h2 class="detail__section-title">Description</h2>
+          <p class="detail__description">{{ property.description }}</p>
+        </div>
+
+        <!-- FEATURES -->
+        @if (property.features && property.features.length > 0) {
+          <div class="detail__section" data-aos="fade-up">
+            <h2 class="detail__section-title">Features & Amenities</h2>
+            <div class="detail__features">
+              @for (feature of property.features; track feature) {
+                @if (feature.trim() !== '') {
+                  <span class="detail__feature">
+                    <i class="fa-solid fa-check"></i>
+                    {{ feature }}
+                  </span>
+                }
+              }
+            </div>
+          </div>
+        }
+
+      </div>
+
+      <!-- RIGHT COLUMN (SIDEBAR) -->
+      <div class="detail__sidebar">
+
+        <!-- PRICE CARD -->
+        <div class="detail__price-card" data-aos="fade-left">
+          <div class="detail__price-header">
+            <span class="detail__price">{{ formatPrice(property.price, property.priceType) }}</span>
+            @if (property.priceType === 'rent') {
+              <span class="detail__price-note">per month</span>
+            }
+          </div>
+          <div class="detail__price-actions">
+            <a routerLink="/contact" class="btn btn--primary btn--full">
+              <i class="fa-solid fa-calendar-check"></i> Schedule Viewing
+            </a>
+            <button
+              class="btn btn--save"
+              [class.saved]="isSaved"
+              (click)="toggleSave()">
+              <i [class]="isSaved ? 'fa-solid fa-heart' : 'fa-regular fa-heart'"></i>
+              {{ isSaved ? 'Saved' : 'Save Property' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- INQUIRY FORM -->
+        <div class="detail__inquiry" data-aos="fade-left" data-aos-delay="100">
+          <h3 class="detail__inquiry-title">
+            <i class="fa-solid fa-envelope"></i>
+            Send Inquiry
+          </h3>
+
+          @if (inquirySent) {
+            <div class="detail__inquiry-success">
+              <i class="fa-solid fa-circle-check"></i>
+              <p>Your message has been sent! We will get back to you shortly.</p>
+            </div>
+          }
+
+          @if (!inquirySent) {
+            <div class="detail__inquiry-form">
+              <div class="form-group">
+                <label class="form-label">Full Name <span>*</span></label>
+                <input
+                  type="text"
+                  class="form-input"
+                  placeholder="Your full name"
+                  [(ngModel)]="inquiryName"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Email <span>*</span></label>
+                <input
+                  type="email"
+                  class="form-input"
+                  placeholder="your@email.com"
+                  [(ngModel)]="inquiryEmail"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Phone</label>
+                <input
+                  type="tel"
+                  class="form-input"
+                  placeholder="+995 555 000 000"
+                  [(ngModel)]="inquiryPhone"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Message <span>*</span></label>
+                <textarea
+                  class="form-input form-textarea"
+                  placeholder="I am interested in this property..."
+                  [(ngModel)]="inquiryMessage"
+                  rows="4">
+                </textarea>
+              </div>
+
+              @if (inquiryError) {
+                <p class="detail__inquiry-error">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  {{ inquiryError }}
+                </p>
+              }
+
+              <button
+                class="btn btn--primary btn--full"
+                (click)="sendInquiry()"
+                [disabled]="inquirySending">
+                @if (inquirySending) {
+                  <i class="fa-solid fa-spinner fa-spin"></i> Sending...
+                } @else {
+                  <i class="fa-solid fa-paper-plane"></i> Send Message
+                }
+              </button>
+            </div>
+          }
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- LIGHTBOX -->
+  @if (lightboxOpen) {
+    <div class="lightbox" (click)="closeLightbox()">
+      <button class="lightbox__close" (click)="closeLightbox()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <img [src]="activeImage" [alt]="property.title" class="lightbox__img" (click)="$event.stopPropagation()" />
+    </div>
+  }
+
+}

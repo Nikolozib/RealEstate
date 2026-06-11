@@ -29,6 +29,7 @@
     </div>
 
     <div class="filter-bar__selects">
+
       <select [(ngModel)]="selectedPriceType" (ngModelChange)="applyFilters()" class="filter-bar__select">
         @for (opt of priceTypes; track opt.value) {
           <option [value]="opt.value">{{ opt.label }}</option>
@@ -49,19 +50,19 @@
 
       <button class="filter-bar__more-btn" (click)="toggleFilters()" [class.active]="filtersOpen">
         <i class="fa-solid fa-sliders"></i>
-        More Filters
+        {{ filtersOpen ? 'Close Filters' : 'More Filters' }}
         @if (activeFilterCount > 0) {
           <span class="filter-bar__badge">{{ activeFilterCount }}</span>
         }
       </button>
-    </div>
 
+    </div>
   </div>
 
   <!-- EXPANDED FILTERS -->
   @if (filtersOpen) {
     <div class="filter-bar__expanded">
-      <div class="filter-bar__container">
+      <div class="filter-bar__container filter-bar__container--expanded">
 
         <div class="filter-bar__group">
           <label class="filter-bar__label">Bedrooms</label>
@@ -77,26 +78,36 @@
           </div>
         </div>
 
-        <div class="filter-bar__group">
-          <label class="filter-bar__label">Min Price ($)</label>
-          <input
-            type="number"
-            placeholder="e.g. 50000"
-            [(ngModel)]="minPrice"
-            (ngModelChange)="applyFilters()"
-            class="filter-bar__input-sm"
-          />
-        </div>
-
-        <div class="filter-bar__group">
-          <label class="filter-bar__label">Max Price ($)</label>
-          <input
-            type="number"
-            placeholder="e.g. 300000"
-            [(ngModel)]="maxPrice"
-            (ngModelChange)="applyFilters()"
-            class="filter-bar__input-sm"
-          />
+        <div class="filter-bar__group filter-bar__group--slider">
+          <label class="filter-bar__label">
+            Price Range —
+            <strong>${{ priceRange[0].toLocaleString() }}</strong>
+            to
+            <strong>${{ priceRange[1].toLocaleString() }}</strong>
+          </label>
+          <div class="price-slider">
+            <div class="price-slider__track">
+              <div class="price-slider__fill" [style]="getFillStyle()"></div>
+            </div>
+            <input
+              type="range"
+              class="price-slider__input price-slider__input--min"
+              [min]="priceMin"
+              [max]="priceMax"
+              [step]="stepSize"
+              [(ngModel)]="priceRange[0]"
+              (ngModelChange)="onMinChange($event)"
+            />
+            <input
+              type="range"
+              class="price-slider__input price-slider__input--max"
+              [min]="priceMin"
+              [max]="priceMax"
+              [step]="stepSize"
+              [(ngModel)]="priceRange[1]"
+              (ngModelChange)="onMaxChange($event)"
+            />
+          </div>
         </div>
 
         @if (activeFilterCount > 0) {
@@ -119,7 +130,8 @@
         @if (loading) {
           Loading properties...
         } @else {
-          <strong>{{ filteredProperties.length }}</strong> {{ filteredProperties.length === 1 ? 'property' : 'properties' }} found
+          <strong>{{ filteredProperties.length }}</strong>
+          {{ filteredProperties.length === 1 ? 'property' : 'properties' }} found
           @if (activeFilterCount > 0) {
             <button class="listings-main__clear" (click)="clearFilters()">
               Clear filters <i class="fa-solid fa-xmark"></i>

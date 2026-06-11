@@ -1,1 +1,105 @@
-<p>login works!</p>
+<div class="auth-page">
+
+  <div class="auth-page__left">
+    <div class="auth-page__left-overlay"></div>
+    <div class="auth-page__left-content">
+      <a routerLink="/" class="auth-page__logo">
+        <i class="fa-solid fa-building-columns"></i>
+        <div>
+          <span class="auth-page__logo-name">RealEstate</span>
+          <span class="auth-page__logo-sub">Georgia</span>
+        </div>
+      </a>
+      <div class="auth-page__left-text">
+        <h2>Find Your Perfect Home in Georgia</h2>
+        <p>Browse hundreds of verified listings across Tbilisi and beyond. Sign in to save your favorites and get in touch with agents.</p>
+        <div class="auth-page__features">
+          <div class="auth-page__feature">
+            <i class="fa-solid fa-check-circle"></i>
+            <span>500+ verified listings</span>
+          </div>
+          <div class="auth-page__feature">
+            <i class="fa-solid fa-check-circle"></i>
+            <span>Save properties to favorites</span>
+          </div>
+          <div class="auth-page__feature">
+            <i class="fa-solid fa-check-circle"></i>
+            <span>Direct contact with agents</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="auth-page__right">
+    <div class="auth-card">
+
+      <div class="auth-card__header">
+        <h1 class="auth-card__title">Welcome Back</h1>
+        <p class="auth-card__sub">Sign in to your account to continue</p>
+      </div>
+
+      <div class="auth-card__body">
+
+        @if (error) {
+          <div class="auth-card__error">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            {{ error }}
+          </div>
+        }
+
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <div class="form-input-wrap">
+            <i class="fa-solid fa-envelope form-input-icon"></i>
+            <input
+              type="email"
+              class="form-input"
+              placeholder="your@email.com"
+              [(ngModel)]="email"
+              (keyup.enter)="login()"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label-row">
+            <label class="form-label">Password</label>
+            <a href="#" class="form-forgot">Forgot password?</a>
+          </div>
+          <div class="form-input-wrap">
+            <i class="fa-solid fa-lock form-input-icon"></i>
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              class="form-input"
+              placeholder="Enter your password"
+              [(ngModel)]="password"
+              (keyup.enter)="login()"
+            />
+            <button class="form-input-toggle" (click)="togglePassword()" type="button">
+              <i [class]="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+            </button>
+          </div>
+        </div>
+
+        <button
+          class="btn btn--primary btn--full"
+          (click)="login()"
+          [disabled]="loading">
+          @if (loading) {
+            <i class="fa-solid fa-spinner fa-spin"></i> Signing in...
+          } @else {
+            Sign In <i class="fa-solid fa-arrow-right"></i>
+          }
+        </button>
+
+        <p class="auth-card__switch">
+          Don't have an account?
+          <a routerLink="/auth/register" class="auth-card__switch-link">Create one free</a>
+        </p>
+
+      </div>
+    </div>
+  </div>
+
+</div>

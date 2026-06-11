@@ -24,9 +24,13 @@ export class Listings implements OnInit {
   selectedPropertyType = '';
   selectedCity = '';
   selectedBedrooms = '';
-  minPrice: number | null = null;
-  maxPrice: number | null = null;
   sortBy = 'newest';
+
+  // Price slider
+  priceMin = 0;
+  priceMax = 1000000;
+  stepSize = 5000;
+  priceRange = [0, 1000000];
 
   // UI state
   filtersOpen = false;
@@ -82,7 +86,6 @@ export class Listings implements OnInit {
       'Browse all apartments, houses, villas and land for sale and rent in Georgia.'
     );
 
-    // read query params from footer links
     this.route.queryParams.subscribe(params => {
       if (params['type']) this.selectedPropertyType = params['type'];
       if (params['priceType']) this.selectedPriceType = params['priceType'];
@@ -127,15 +130,14 @@ export class Listings implements OnInit {
       result = result.filter(p => p.bedrooms >= min);
     }
 
-    if (this.minPrice !== null) {
-      result = result.filter(p => p.price >= this.minPrice!);
+    if (this.priceRange[0] > this.priceMin) {
+      result = result.filter(p => p.price >= this.priceRange[0]);
     }
 
-    if (this.maxPrice !== null) {
-      result = result.filter(p => p.price <= this.maxPrice!);
+    if (this.priceRange[1] < this.priceMax) {
+      result = result.filter(p => p.price <= this.priceRange[1]);
     }
 
-    // Sort
     switch (this.sortBy) {
       case 'price_asc':
         result.sort((a, b) => a.price - b.price);
@@ -164,8 +166,8 @@ export class Listings implements OnInit {
     if (this.selectedPropertyType) count++;
     if (this.selectedCity) count++;
     if (this.selectedBedrooms) count++;
-    if (this.minPrice !== null) count++;
-    if (this.maxPrice !== null) count++;
+    if (this.priceRange[0] > this.priceMin) count++;
+    if (this.priceRange[1] < this.priceMax) count++;
     this.activeFilterCount = count;
   }
 
@@ -175,14 +177,33 @@ export class Listings implements OnInit {
     this.selectedPropertyType = '';
     this.selectedCity = '';
     this.selectedBedrooms = '';
-    this.minPrice = null;
-    this.maxPrice = null;
+    this.priceRange = [this.priceMin, this.priceMax];
     this.sortBy = 'newest';
     this.applyFilters();
   }
 
   toggleFilters() {
     this.filtersOpen = !this.filtersOpen;
+  }
+
+  onMinChange(value: number) {
+    if (Number(value) >= this.priceRange[1]) {
+      this.priceRange[0] = this.priceRange[1] - this.stepSize;
+    }
+    this.applyFilters();
+  }
+
+  onMaxChange(value: number) {
+    if (Number(value) <= this.priceRange[0]) {
+      this.priceRange[1] = this.priceRange[0] + this.stepSize;
+    }
+    this.applyFilters();
+  }
+
+  getFillStyle(): string {
+    const left = (this.priceRange[0] / this.priceMax) * 100;
+    const right = 100 - (this.priceRange[1] / this.priceMax) * 100;
+    return `left: ${left}%; right: ${right}%`;
   }
 
   formatPrice(price: number, type: string): string {
