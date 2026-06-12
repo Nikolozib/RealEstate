@@ -9,7 +9,7 @@ import { UserService } from '../../../core/services/user';
   standalone: true,
   imports: [RouterLink, FormsModule],
   templateUrl: './register.html',
-  styleUrl: './register.scss'
+  styleUrl: './register.scss',
 })
 export class Register {
   displayName = '';
@@ -25,7 +25,7 @@ export class Register {
   constructor(
     private authService: AuthService,
     private userService: UserService,
-    private router: Router
+    private router: Router,
   ) {}
 
   async register() {
@@ -49,13 +49,19 @@ export class Register {
 
     try {
       const cred = await this.authService.register(this.email, this.password);
-      await this.userService.createUser(cred.user.uid, {
-        displayName: this.displayName,
-        email: this.email,
-        phone: this.phone,
-        photoURL: ''
-      });
+      try {
+        await this.userService.createUser(cred.user.uid, {
+          displayName: this.displayName,
+          email: this.email,
+          phone: this.phone,
+          photoURL: '',
+        });
+      } catch (firestoreError) {
+        console.warn('Firestore user creation failed:', firestoreError);
+      }
+      // await cred.user.sendEmailVerification();
       this.router.navigate(['/']);
+      
     } catch (e: any) {
       this.error = this.getErrorMessage(e.code);
     } finally {
@@ -65,10 +71,14 @@ export class Register {
 
   getErrorMessage(code: string): string {
     switch (code) {
-      case 'auth/email-already-in-use': return 'An account with this email already exists.';
-      case 'auth/invalid-email': return 'Please enter a valid email address.';
-      case 'auth/weak-password': return 'Password should be at least 6 characters.';
-      default: return 'Something went wrong. Please try again.';
+      case 'auth/email-already-in-use':
+        return 'An account with this email already exists.';
+      case 'auth/invalid-email':
+        return 'Please enter a valid email address.';
+      case 'auth/weak-password':
+        return 'Password should be at least 6 characters.';
+      default:
+        return 'Something went wrong. Please try again.';
     }
   }
 
@@ -86,6 +96,10 @@ export class Register {
     return { label: 'Strong', level: 3 };
   }
 
-  togglePassword() { this.showPassword = !this.showPassword; }
-  toggleConfirm() { this.showConfirm = !this.showConfirm; }
+  togglePassword() {
+    this.showPassword = !this.showPassword;
+  }
+  toggleConfirm() {
+    this.showConfirm = !this.showConfirm;
+  }
 }

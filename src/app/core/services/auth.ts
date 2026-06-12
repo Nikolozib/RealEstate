@@ -5,10 +5,12 @@ import { BehaviorSubject } from 'rxjs';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   isLoggedIn$ = new BehaviorSubject<boolean>(false);
+  currentUser$ = new BehaviorSubject<any>(null);
 
   constructor(private auth: Auth) {
     user(this.auth).subscribe(u => {
       this.isLoggedIn$.next(!!u);
+      this.currentUser$.next(u);
     });
   }
 
@@ -22,5 +24,9 @@ export class AuthService {
 
   logout() {
     return signOut(this.auth);
+  }
+
+  getCurrentUser() {
+    return this.auth.currentUser;
   }
 }

@@ -1,1 +1,163 @@
-<p>profile works!</p>
+@if (loading) {
+  <div class="profile-loading">
+    <i class="fa-solid fa-spinner fa-spin"></i>
+    <p>Loading your profile...</p>
+  </div>
+}
+
+@if (!loading && user) {
+  <section class="profile-hero">
+    <div class="profile-hero__overlay"></div>
+    <div class="profile-hero__content">
+      <div class="profile-hero__avatar">{{ getInitials() }}</div>
+      <div class="profile-hero__info">
+        <h1 class="profile-hero__name">{{ user.displayName }}</h1>
+        <p class="profile-hero__email">
+          <i class="fa-solid fa-envelope"></i> {{ user.email }}
+        </p>
+        <span class="profile-hero__role">{{ user.role }}</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="profile-main">
+    <div class="profile-main__container">
+
+      <div class="profile-tabs">
+        <button
+          class="profile-tab"
+          [class.active]="activeTab === 'profile'"
+          (click)="setTab('profile')">
+          <i class="fa-solid fa-user"></i> Profile
+        </button>
+        <button
+          class="profile-tab"
+          [class.active]="activeTab === 'saved'"
+          (click)="setTab('saved')">
+          <i class="fa-regular fa-heart"></i> Saved Properties
+        </button>
+        <button
+          class="profile-tab"
+          [class.active]="activeTab === 'security'"
+          (click)="setTab('security')">
+          <i class="fa-solid fa-shield"></i> Security
+        </button>
+      </div>
+
+      @if (activeTab === 'profile') {
+        <div class="profile-card" data-aos="fade-up">
+          <h2 class="profile-card__title">Personal Information</h2>
+
+          @if (saved) {
+            <div class="profile-card__success">
+              <i class="fa-solid fa-circle-check"></i>
+              Profile updated successfully!
+            </div>
+          }
+
+          @if (error) {
+            <div class="profile-card__error">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              {{ error }}
+            </div>
+          }
+
+          <div class="profile-form">
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <div class="form-input-wrap">
+                <i class="fa-solid fa-user form-input-icon"></i>
+                <input type="text" class="form-input" [(ngModel)]="displayName" placeholder="Your full name" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <div class="form-input-wrap">
+                <i class="fa-solid fa-envelope form-input-icon"></i>
+                <input type="email" class="form-input" [value]="user.email" disabled />
+              </div>
+              <span class="form-hint">Email cannot be changed</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Phone Number</label>
+              <div class="form-input-wrap">
+                <i class="fa-solid fa-phone form-input-icon"></i>
+                <input type="tel" class="form-input" [(ngModel)]="phone" placeholder="+995 555 000 000" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Account Role</label>
+              <div class="form-input-wrap">
+                <i class="fa-solid fa-id-badge form-input-icon"></i>
+                <input type="text" class="form-input" [value]="user.role" disabled />
+              </div>
+            </div>
+
+            <button class="btn btn--primary" (click)="saveProfile()" [disabled]="saving">
+              @if (saving) {
+                <i class="fa-solid fa-spinner fa-spin"></i> Saving...
+              } @else {
+                <i class="fa-solid fa-floppy-disk"></i> Save Changes
+              }
+            </button>
+          </div>
+        </div>
+      }
+
+      @if (activeTab === 'saved') {
+        <div class="profile-card" data-aos="fade-up">
+          <h2 class="profile-card__title">Saved Properties</h2>
+          <p class="profile-card__sub">
+            You have <strong>{{ user.savedProperties?.length || 0 }}</strong> saved properties.
+          </p>
+          <a routerLink="/favorites" class="btn btn--primary">
+            <i class="fa-regular fa-heart"></i> View Saved Properties
+          </a>
+        </div>
+      }
+
+      @if (activeTab === 'security') {
+        <div class="profile-card" data-aos="fade-up">
+          <h2 class="profile-card__title">Security</h2>
+          <div class="profile-security">
+            <div class="profile-security__item">
+              <div class="profile-security__icon">
+                <i class="fa-solid fa-envelope"></i>
+              </div>
+              <div>
+                <span class="profile-security__label">Email</span>
+                <span class="profile-security__value">{{ user.email }}</span>
+              </div>
+              <span class="profile-security__status verified">
+                <i class="fa-solid fa-circle-check"></i> Verified
+              </span>
+            </div>
+
+            <div class="profile-security__item">
+              <div class="profile-security__icon">
+                <i class="fa-solid fa-lock"></i>
+              </div>
+              <div>
+                <span class="profile-security__label">Password</span>
+                <span class="profile-security__value">••••••••</span>
+              </div>
+              <button class="profile-security__btn">Change</button>
+            </div>
+          </div>
+
+          <div class="profile-danger">
+            <h3 class="profile-danger__title">Danger Zone</h3>
+            <p class="profile-danger__sub">Once you sign out you will need to sign in again to access your account.</p>
+            <button class="btn btn--danger" (click)="logout()">
+              <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+            </button>
+          </div>
+        </div>
+      }
+
+    </div>
+  </section>
+}

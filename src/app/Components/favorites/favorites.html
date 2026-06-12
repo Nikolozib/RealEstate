@@ -1,1 +1,96 @@
-<p>favorites works!</p>
+<section class="favorites-hero">
+  <div class="favorites-hero__overlay"></div>
+  <div class="favorites-hero__content">
+    <span class="favorites-hero__label">Your collection</span>
+    <h1 class="favorites-hero__title">Saved Properties</h1>
+    <p class="favorites-hero__sub">Properties you have saved for later</p>
+  </div>
+</section>
+
+<section class="favorites-main">
+  <div class="favorites-main__container">
+
+    @if (loading) {
+      <div class="favorites-grid">
+        @for (i of [1,2,3]; track i) {
+          <div class="skeleton-card">
+            <div class="skeleton-img"></div>
+            <div class="skeleton-body">
+              <div class="skeleton-line wide"></div>
+              <div class="skeleton-line medium"></div>
+              <div class="skeleton-line short"></div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    @if (!loading && savedProperties.length === 0) {
+      <div class="favorites-empty" data-aos="fade-up">
+        <i class="fa-regular fa-heart"></i>
+        <h2>No saved properties yet</h2>
+        <p>Browse our listings and click the heart icon to save properties you love.</p>
+        <a routerLink="/listings" class="btn btn--primary">
+          <i class="fa-solid fa-magnifying-glass"></i> Browse Properties
+        </a>
+      </div>
+    }
+
+    @if (!loading && savedProperties.length > 0) {
+      <div class="favorites-main__header" data-aos="fade-up">
+        <p class="favorites-main__count">
+          <strong>{{ savedProperties.length }}</strong>
+          {{ savedProperties.length === 1 ? 'property' : 'properties' }} saved
+        </p>
+        <a routerLink="/listings" class="favorites-main__browse">
+          <i class="fa-solid fa-plus"></i> Browse more
+        </a>
+      </div>
+
+      <div class="favorites-grid">
+        @for (property of savedProperties; track property.id; let i = $index) {
+          <div class="property-card" data-aos="fade-up" [attr.data-aos-delay]="(i % 3) * 100">
+
+            <a [routerLink]="['/listings', property.id]" class="property-card__img-wrap">
+              <img [src]="property.thumbnailUrl" [alt]="property.title" class="property-card__img" loading="lazy" />
+              <span class="property-card__badge" [class.rent]="property.priceType === 'rent'">
+                {{ property.priceType === 'rent' ? 'For Rent' : 'For Sale' }}
+              </span>
+              <div class="property-card__overlay">
+                <span>View Details <i class="fa-solid fa-arrow-right"></i></span>
+              </div>
+            </a>
+
+            <div class="property-card__body">
+              <div class="property-card__top">
+                <span class="property-card__type">{{ property.propertyType }}</span>
+                <span class="property-card__price">{{ formatPrice(property.price, property.priceType) }}</span>
+              </div>
+              <a [routerLink]="['/listings', property.id]" class="property-card__title">
+                {{ property.title }}
+              </a>
+              <p class="property-card__location">
+                <i class="fa-solid fa-location-dot"></i>
+                {{ property.district }}, {{ property.city }}
+              </p>
+              <div class="property-card__meta">
+                @if (property.bedrooms > 0) {
+                  <span><i class="fa-solid fa-bed"></i> {{ property.bedrooms }} Beds</span>
+                }
+                @if (property.bathrooms > 0) {
+                  <span><i class="fa-solid fa-bath"></i> {{ property.bathrooms }} Baths</span>
+                }
+                <span><i class="fa-solid fa-vector-square"></i> {{ property.area }} m²</span>
+              </div>
+              <button class="property-card__unsave" (click)="unsave(property.id!)">
+                <i class="fa-solid fa-heart"></i> Remove from saved
+              </button>
+            </div>
+
+          </div>
+        }
+      </div>
+    }
+
+  </div>
+</section>

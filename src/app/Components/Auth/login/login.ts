@@ -8,7 +8,7 @@ import { AuthService } from '../../../core/services/auth';
   standalone: true,
   imports: [RouterLink, FormsModule],
   templateUrl: './login.html',
-  styleUrl: './login.scss'
+  styleUrl: './login.scss',
 })
 export class Login {
   email = '';
@@ -17,7 +17,10 @@ export class Login {
   error = '';
   showPassword = false;
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+  ) {}
 
   async login() {
     if (!this.email || !this.password) {
@@ -40,12 +43,18 @@ export class Login {
 
   getErrorMessage(code: string): string {
     switch (code) {
-      case 'auth/user-not-found': return 'No account found with this email.';
-      case 'auth/wrong-password': return 'Incorrect password. Please try again.';
-      case 'auth/invalid-email': return 'Please enter a valid email address.';
-      case 'auth/too-many-requests': return 'Too many failed attempts. Please try again later.';
-      case 'auth/invalid-credential': return 'Invalid email or password.';
-      default: return 'Something went wrong. Please try again.';
+      case 'auth/user-not-found':
+        return 'No account found with this email.';
+      case 'auth/wrong-password':
+        return 'Incorrect password. Please try again.';
+      case 'auth/invalid-email':
+        return 'Please enter a valid email address.';
+      case 'auth/too-many-requests':
+        return 'Too many failed attempts. Please try again later.';
+      case 'auth/invalid-credential':
+        return 'Invalid email or password.';
+      default:
+        return 'Something went wrong. Please try again.';
     }
   }
 
