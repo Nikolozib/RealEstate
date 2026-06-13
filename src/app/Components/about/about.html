@@ -1,1 +1,103 @@
-<p>about works!</p>
+<!-- HERO -->
+<section class="about-hero">
+  <div class="about-hero__overlay"></div>
+  <div class="about-hero__content" data-aos="fade-up">
+    <span class="about-hero__label">Who we are</span>
+    <h1 class="about-hero__title">Georgia's Most Trusted<br>Real Estate Platform</h1>
+    <p class="about-hero__sub">We connect people with their perfect homes across Tbilisi and all of Georgia — with transparency, speed and care.</p>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="about-stats">
+  <div class="about-stats__container">
+    @for (stat of stats; track stat.label; let i = $index) {
+      <div class="about-stats__item" data-aos="fade-up" [attr.data-aos-delay]="i * 100">
+        <div class="about-stats__icon">
+          <i [class]="stat.icon"></i>
+        </div>
+        <span class="about-stats__value">{{ stat.value }}</span>
+        <span class="about-stats__label">{{ stat.label }}</span>
+      </div>
+    }
+  </div>
+</section>
+
+<!-- STORY -->
+<section class="about-story">
+  <div class="about-story__container">
+    <div class="about-story__img" data-aos="fade-right">
+      <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&q=80" alt="Our office" />
+    </div>
+    <div class="about-story__text" data-aos="fade-left">
+      <span class="section-label">Our story</span>
+      <h2 class="section-title">Built for Georgia,<br>by Georgians</h2>
+      <p>We started RealEstate Georgia in 2016 with one simple goal — to make finding a home in Georgia as easy and transparent as possible.</p>
+      <p>Back then, property search was scattered across unreliable classifieds with outdated listings and no way to verify what you were looking at. We built a better way.</p>
+      <p>Today we serve thousands of buyers, renters and sellers across Tbilisi, Batumi, Rustavi and beyond — with every listing verified, every agent vetted, and every transaction supported by our team.</p>
+      <a routerLink="/contact" class="btn btn--primary">
+        Get in Touch <i class="fa-solid fa-arrow-right"></i>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- VALUES -->
+<section class="about-values">
+  <div class="about-values__container">
+    <div class="about-values__header" data-aos="fade-up">
+      <span class="section-label">What drives us</span>
+      <h2 class="section-title">Our Values</h2>
+    </div>
+    <div class="about-values__grid">
+      @for (val of values; track val.title; let i = $index) {
+        <div class="value-card" data-aos="fade-up" [attr.data-aos-delay]="i * 100">
+          <div class="value-card__icon">
+            <i [class]="val.icon"></i>
+          </div>
+          <h3 class="value-card__title">{{ val.title }}</h3>
+          <p class="value-card__desc">{{ val.desc }}</p>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section class="about-team">
+  <div class="about-team__container">
+    <div class="about-team__header" data-aos="fade-up">
+      <span class="section-label">The people behind it</span>
+      <h2 class="section-title">Meet the Team</h2>
+      <p class="section-sub">A dedicated group of real estate professionals who genuinely care about helping you find your home.</p>
+    </div>
+    <div class="about-team__grid">
+      @for (member of team; track member.name; let i = $index) {
+        <div class="team-card" data-aos="fade-up" [attr.data-aos-delay]="i * 120">
+          <div class="team-card__img-wrap">
+            <img [src]="member.avatar" [alt]="member.name" class="team-card__img" />
+          </div>
+          <div class="team-card__body">
+            <h3 class="team-card__name">{{ member.name }}</h3>
+            <span class="team-card__role">{{ member.role }}</span>
+            <p class="team-card__bio">{{ member.bio }}</p>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="about-cta">
+  <div class="about-cta__overlay"></div>
+  <div class="about-cta__content" data-aos="fade-up">
+    <span class="section-label light">Ready to start?</span>
+    <h2 class="about-cta__title">Find Your Dream Home Today</h2>
+    <p class="about-cta__sub">Browse hundreds of verified listings or get in touch with our team directly.</p>
+    <div class="about-cta__actions">
+      <a routerLink="/listings" class="btn btn--secondary">Browse Properties <i class="fa-solid fa-arrow-right"></i></a>
+      <a routerLink="/contact" class="btn btn--outline-white">Contact Us</a>
+    </div>
+  </div>
+</section>

@@ -297,7 +297,7 @@ $transition:    all 0.3s ease;
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
-    background: darken($bg, 3%);
+    background: #f0ede8;
   }
 
   &::placeholder { color: $text-secondary; }

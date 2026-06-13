@@ -1,0 +1,376 @@
+@if (loading) {
+  <div class="admin-loading">
+    <i class="fa-solid fa-spinner fa-spin"></i>
+    <p>Loading admin panel...</p>
+  </div>
+}
+
+@if (!loading && isAdmin) {
+<div class="admin">
+
+  <!-- SIDEBAR -->
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar__logo">
+      <i class="fa-solid fa-building-columns"></i>
+      <div>
+        <span class="admin-sidebar__logo-name">RealEstate</span>
+        <span class="admin-sidebar__logo-sub">Admin Panel</span>
+      </div>
+    </div>
+
+    <nav class="admin-sidebar__nav">
+      <button class="admin-sidebar__link" [class.active]="activeTab === 'properties'" (click)="setTab('properties')">
+        <i class="fa-solid fa-building"></i> Properties
+        <span class="admin-sidebar__count">{{ properties.length }}</span>
+      </button>
+      <button class="admin-sidebar__link" [class.active]="activeTab === 'inquiries'" (click)="setTab('inquiries')">
+        <i class="fa-solid fa-envelope"></i> Inquiries
+        <span class="admin-sidebar__count">{{ inquiries.length }}</span>
+      </button>
+    </nav>
+
+    <div class="admin-sidebar__footer">
+      <a routerLink="/" class="admin-sidebar__back">
+        <i class="fa-solid fa-arrow-left"></i> Back to Site
+      </a>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="admin-main">
+
+    <!-- PROPERTIES TAB -->
+    @if (activeTab === 'properties') {
+      <div class="admin-content">
+
+        <div class="admin-content__header">
+          <div>
+            <h1 class="admin-content__title">Properties</h1>
+            <p class="admin-content__sub">{{ properties.length }} total listings</p>
+          </div>
+          <button class="btn btn--primary" (click)="openAddForm()">
+            <i class="fa-solid fa-plus"></i> Add Property
+          </button>
+        </div>
+
+        @if (formSuccess) {
+          <div class="admin-alert admin-alert--success" data-aos="fade-down">
+            <i class="fa-solid fa-circle-check"></i> {{ formSuccess }}
+          </div>
+        }
+
+        <!-- ADD/EDIT FORM -->
+        @if (formMode) {
+          <div class="admin-form-card" id="form-top" data-aos="fade-up">
+            <div class="admin-form-card__header">
+              <h2>{{ formMode === 'add' ? 'Add New Property' : 'Edit Property' }}</h2>
+              <button class="admin-form-card__close" (click)="cancelForm()">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            @if (formError) {
+              <div class="admin-alert admin-alert--error">
+                <i class="fa-solid fa-triangle-exclamation"></i> {{ formError }}
+              </div>
+            }
+
+            <div class="admin-form">
+              <div class="admin-form__section">
+                <h3 class="admin-form__section-title">Basic Info</h3>
+                <div class="admin-form__grid">
+                  <div class="form-group admin-form__full">
+                    <label class="form-label">Title <span class="req">*</span></label>
+                    <input type="text" class="form-input" [(ngModel)]="form.title" placeholder="Property title" />
+                  </div>
+                  <div class="form-group admin-form__full">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-input form-textarea" [(ngModel)]="form.description" rows="3" placeholder="Full description"></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Price ($) <span class="req">*</span></label>
+                    <input type="number" class="form-input" [(ngModel)]="form.price" placeholder="e.g. 95000" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Price Type</label>
+                    <select class="form-input form-select" [(ngModel)]="form.priceType">
+                      @for (t of priceTypes; track t) {
+                        <option [value]="t">{{ t }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Property Type</label>
+                    <select class="form-input form-select" [(ngModel)]="form.propertyType">
+                      @for (t of propertyTypes; track t) {
+                        <option [value]="t">{{ t }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select class="form-input form-select" [(ngModel)]="form.status">
+                      @for (s of statusOptions; track s) {
+                        <option [value]="s">{{ s }}</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="admin-form__section">
+                <h3 class="admin-form__section-title">Location</h3>
+                <div class="admin-form__grid">
+                  <div class="form-group">
+                    <label class="form-label">City</label>
+                    <input type="text" class="form-input" [(ngModel)]="form.city" placeholder="e.g. Tbilisi" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">District</label>
+                    <input type="text" class="form-input" [(ngModel)]="form.district" placeholder="e.g. Vake" />
+                  </div>
+                  <div class="form-group admin-form__full">
+                    <label class="form-label">Address</label>
+                    <input type="text" class="form-input" [(ngModel)]="form.address" placeholder="Full address" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="admin-form__section">
+                <h3 class="admin-form__section-title">Details</h3>
+                <div class="admin-form__grid admin-form__grid--3">
+                  <div class="form-group">
+                    <label class="form-label">Bedrooms</label>
+                    <input type="number" class="form-input" [(ngModel)]="form.bedrooms" min="0" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Bathrooms</label>
+                    <input type="number" class="form-input" [(ngModel)]="form.bathrooms" min="0" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Area (m²) <span class="req">*</span></label>
+                    <input type="number" class="form-input" [(ngModel)]="form.area" min="0" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Floor</label>
+                    <input type="number" class="form-input" [(ngModel)]="form.floor" min="0" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Total Floors</label>
+                    <input type="number" class="form-input" [(ngModel)]="form.totalFloors" min="0" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Year Built</label>
+                    <input type="number" class="form-input" [(ngModel)]="form.yearBuilt" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Parking Spots</label>
+                    <input type="number" class="form-input" [(ngModel)]="form.parkingSpots" min="0" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="admin-form__section">
+                <h3 class="admin-form__section-title">Media & Options</h3>
+                <div class="admin-form__grid">
+                  <div class="form-group admin-form__full">
+                    <label class="form-label">Thumbnail URL</label>
+                    <input type="text" class="form-input" [(ngModel)]="form.thumbnailUrl" placeholder="https://..." />
+                  </div>
+                  <div class="form-group admin-form__full">
+                    <label class="form-label">Features</label>
+                    <div class="admin-form__chips">
+                      @for (feature of featureOptions; track feature) {
+                        <button
+                          type="button"
+                          class="feature-chip"
+                          [class.active]="hasFeature(feature)"
+                          (click)="toggleFeature(feature)">
+                          @if (hasFeature(feature)) {
+                            <i class="fa-solid fa-check"></i>
+                          }
+                          {{ feature }}
+                        </button>
+                      }
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Featured Listing</label>
+                    <label class="admin-toggle">
+                      <input type="checkbox" [(ngModel)]="form.isFeatured" />
+                      <span class="admin-toggle__slider"></span>
+                      <span class="admin-toggle__label">{{ form.isFeatured ? 'Yes — shown on home page' : 'No' }}</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="admin-form__actions">
+                <button class="btn btn--ghost" (click)="cancelForm()">Cancel</button>
+                <button class="btn btn--primary" (click)="saveProperty()" [disabled]="formSaving">
+                  @if (formSaving) {
+                    <i class="fa-solid fa-spinner fa-spin"></i> Saving...
+                  } @else {
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    {{ formMode === 'add' ? 'Add Property' : 'Save Changes' }}
+                  }
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- PROPERTIES TABLE -->
+        <div class="admin-table-wrap" data-aos="fade-up">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th>Type</th>
+                <th>Price</th>
+                <th>Status</th>
+                <th>Featured</th>
+                <th>Views</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (property of properties; track property.id) {
+                <tr>
+                  <td>
+                    <div class="admin-table__property">
+                      <img [src]="property.thumbnailUrl" [alt]="property.title" class="admin-table__thumb" />
+                      <div>
+                        <span class="admin-table__name">{{ property.title }}</span>
+                        <span class="admin-table__location">{{ property.district }}, {{ property.city }}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="admin-table__badge">{{ property.propertyType }}</span>
+                  </td>
+                  <td class="admin-table__price">{{ formatPrice(property.price, property.priceType) }}</td>
+                  <td>
+                    <span class="admin-table__status" [class]="getStatusColor(property.status)">
+                      <i class="fa-solid fa-circle"></i> {{ property.status }}
+                    </span>
+                  </td>
+                  <td>
+                    @if (property.isFeatured) {
+                      <i class="fa-solid fa-star admin-table__star"></i>
+                    } @else {
+                      <span class="admin-table__no">—</span>
+                    }
+                  </td>
+                  <td>{{ property.views }}</td>
+                  <td>
+                    <div class="admin-table__actions">
+                      <a [routerLink]="['/listings', property.id]" target="_blank" class="admin-table__btn view" title="View">
+                        <i class="fa-solid fa-eye"></i>
+                      </a>
+                      <button class="admin-table__btn edit" (click)="openEditForm(property)" title="Edit">
+                        <i class="fa-solid fa-pen"></i>
+                      </button>
+                      @if (deleteConfirmId === property.id) {
+                        <div class="admin-table__confirm">
+                          <span>Delete?</span>
+                          <button class="admin-table__btn danger" (click)="deleteProperty(property.id!)">Yes</button>
+                          <button class="admin-table__btn cancel" (click)="cancelDelete()">No</button>
+                        </div>
+                      } @else {
+                        <button class="admin-table__btn delete" (click)="confirmDelete(property.id!)" title="Delete">
+                          <i class="fa-solid fa-trash"></i>
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+
+          @if (properties.length === 0) {
+            <div class="admin-table__empty">
+              <i class="fa-solid fa-building-circle-xmark"></i>
+              <p>No properties yet. Click "Add Property" to get started.</p>
+            </div>
+          }
+        </div>
+
+      </div>
+    }
+
+    <!-- INQUIRIES TAB -->
+    @if (activeTab === 'inquiries') {
+      <div class="admin-content">
+        <div class="admin-content__header">
+          <div>
+            <h1 class="admin-content__title">Inquiries</h1>
+            <p class="admin-content__sub">{{ inquiries.length }} total messages</p>
+          </div>
+        </div>
+
+        <div class="admin-table-wrap" data-aos="fade-up">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Sender</th>
+                <th>Property</th>
+                <th>Message</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (inquiry of inquiries; track inquiry.id) {
+                <tr [class.unread]="inquiry.status === 'new'">
+                  <td>
+                    <div class="admin-table__sender">
+                      <span class="admin-table__name">{{ inquiry.senderName }}</span>
+                      <span class="admin-table__location">{{ inquiry.senderEmail }}</span>
+                      @if (inquiry.senderPhone) {
+                        <span class="admin-table__location">{{ inquiry.senderPhone }}</span>
+                      }
+                    </div>
+                  </td>
+                  <td>
+                    <span class="admin-table__name">{{ inquiry.propertyTitle || 'General Inquiry' }}</span>
+                  </td>
+                  <td>
+                    <p class="admin-table__message">{{ inquiry.message }}</p>
+                  </td>
+                  <td>
+                    <span class="admin-table__status" [class]="getInquiryStatusColor(inquiry.status)">
+                      <i class="fa-solid fa-circle"></i> {{ inquiry.status }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="admin-table__actions">
+                      <a [href]="'mailto:' + inquiry.senderEmail" class="admin-table__btn view" title="Reply by email">
+                        <i class="fa-solid fa-reply"></i>
+                      </a>
+                      @if (inquiry.status === 'new') {
+                        <button class="admin-table__btn edit" (click)="markInquiryRead(inquiry.id!)" title="Mark as read">
+                          <i class="fa-solid fa-check"></i>
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+
+          @if (inquiries.length === 0) {
+            <div class="admin-table__empty">
+              <i class="fa-solid fa-envelope-open"></i>
+              <p>No inquiries yet.</p>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+  </main>
+</div>
+}

@@ -1,0 +1,664 @@
+$primary:       #1a4a3a;
+$primary-light: #2d6e57;
+$secondary:     #c8975a;
+$secondary-dark:#a87a45;
+$bg:            #f7f5f1;
+$bg-card:       #ffffff;
+$text:          #1a1a2e;
+$text-secondary:#5a5a72;
+$border:        #e8e4de;
+$transition:    all 0.3s ease;
+$sidebar-width: 260px;
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+// ─── BUTTONS ──────────────────────────────────────────────
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  border: none;
+  cursor: pointer;
+  transition: $transition;
+  text-decoration: none;
+
+  &--primary {
+    background: $secondary;
+    color: #fff;
+    &:hover:not(:disabled) {
+      background: $secondary-dark;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(200,151,90,0.35);
+    }
+    &:disabled { opacity: 0.7; cursor: not-allowed; }
+  }
+
+  &--ghost {
+    background: transparent;
+    color: $text-secondary;
+    border: 1px solid $border;
+    &:hover { border-color: $text-secondary; color: $text; }
+  }
+}
+
+// ─── LOADING ──────────────────────────────────────────────
+.admin-loading {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: $text-secondary;
+  background: $bg;
+
+  i { font-size: 36px; color: $primary; }
+  p { font-size: 15px; }
+}
+
+// ─── LAYOUT ───────────────────────────────────────────────
+.admin {
+  display: grid;
+  grid-template-columns: $sidebar-width 1fr;
+  min-height: 100vh;
+  background: $bg;
+  font-family: 'Inter', sans-serif;
+}
+
+// ─── SIDEBAR ──────────────────────────────────────────────
+.admin-sidebar {
+  background: $primary;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+
+  &__logo {
+    padding: 28px 24px 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+
+    i { font-size: 24px; color: $secondary; }
+
+    div {
+      display: flex;
+      flex-direction: column;
+      line-height: 1;
+    }
+  }
+
+  &__logo-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  &__logo-sub {
+    font-size: 10px;
+    color: $secondary;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 3px;
+  }
+
+  &__nav {
+    flex: 1;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &__link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.65);
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: $transition;
+    width: 100%;
+    text-align: left;
+
+    i { font-size: 14px; width: 16px; }
+
+    &:hover {
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+    }
+
+    &.active {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+    }
+  }
+
+  &__count {
+    margin-left: auto;
+    background: rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.8);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+
+  &__footer {
+    padding: 16px 12px 24px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+
+  &__back {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.55);
+    text-decoration: none;
+    transition: $transition;
+    cursor: pointer;
+
+    i { font-size: 12px; }
+
+    &:hover {
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+    }
+  }
+}
+
+// ─── MAIN ─────────────────────────────────────────────────
+.admin-main {
+  padding: 32px;
+  overflow-y: auto;
+}
+
+.admin-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  &__title {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: $text;
+    margin: 0 0 4px;
+  }
+
+  &__sub {
+    font-size: 13px;
+    color: $text-secondary;
+    margin: 0;
+  }
+}
+
+// ─── ALERTS ───────────────────────────────────────────────
+.admin-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+
+  i { font-size: 14px; }
+
+  &--success {
+    background: rgba(45,138,78,0.1);
+    border: 1px solid rgba(45,138,78,0.25);
+    color: #2d8a4e;
+  }
+
+  &--error {
+    background: rgba(192,57,43,0.08);
+    border: 1px solid rgba(192,57,43,0.2);
+    color: #c0392b;
+  }
+}
+
+// ─── FORM CARD ────────────────────────────────────────────
+.admin-form-card {
+  background: $bg-card;
+  border-radius: 12px;
+  border: 1px solid $border;
+  overflow: hidden;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 28px;
+    border-bottom: 1px solid $border;
+    background: $bg;
+
+    h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: $text;
+      margin: 0;
+    }
+  }
+
+  &__close {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: none;
+    border: 1px solid $border;
+    color: $text-secondary;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: $transition;
+
+    &:hover {
+      background: #c0392b;
+      border-color: #c0392b;
+      color: #fff;
+      transform: rotate(90deg);
+    }
+  }
+}
+
+// ─── FORM ─────────────────────────────────────────────────
+.admin-form {
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+
+  &__section-title {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: $text-secondary;
+    margin: 0 0 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid $border;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+
+    &--3 { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  &__full { grid-column: 1 / -1; }
+
+  &__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding-top: 8px;
+    border-top: 1px solid $border;
+  }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: $text-secondary;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+
+  .req { color: #c0392b; }
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid $border;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  color: $text;
+  background: $bg;
+  outline: none;
+  transition: $transition;
+  box-sizing: border-box;
+
+  &:focus {
+    border-color: $primary;
+    background: $bg-card;
+    box-shadow: 0 0 0 3px rgba(26,74,58,0.08);
+  }
+
+  &::placeholder { color: $text-secondary; }
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.6;
+}
+
+.form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235a5a72' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+// ─── FEATURE CHIPS ────────────────────────────────────────
+.feature-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid $border;
+  border-radius: 20px;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  color: $text-secondary;
+  background: $bg;
+  cursor: pointer;
+  transition: $transition;
+  text-transform: capitalize;
+
+  i { font-size: 11px; }
+
+  &:hover { border-color: $primary-light; color: $primary; }
+
+  &.active {
+    background: $primary;
+    border-color: $primary;
+    color: #fff;
+  }
+}
+
+// ─── TOGGLE ───────────────────────────────────────────────
+.admin-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+
+  input { display: none; }
+
+  &__slider {
+    width: 44px;
+    height: 24px;
+    border-radius: 12px;
+    background: $border;
+    position: relative;
+    transition: $transition;
+    flex-shrink: 0;
+
+    &::after {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      top: 3px;
+      left: 3px;
+      transition: $transition;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+  }
+
+  input:checked + &__slider {
+    background: $primary;
+    &::after { transform: translateX(20px); }
+  }
+
+  &__label {
+    font-size: 14px;
+    color: $text-secondary;
+  }
+}
+
+// ─── TABLE ────────────────────────────────────────────────
+.admin-table-wrap {
+  background: $bg-card;
+  border-radius: 12px;
+  border: 1px solid $border;
+  overflow: hidden;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  thead tr {
+    background: $bg;
+    border-bottom: 1px solid $border;
+  }
+
+  th {
+    padding: 12px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: $text-secondary;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid $border;
+    transition: $transition;
+
+    &:last-child { border-bottom: none; }
+    &:hover { background: $bg; }
+    &.unread { background: rgba(200,151,90,0.04); }
+  }
+
+  td {
+    padding: 14px 16px;
+    font-size: 13px;
+    color: $text;
+    vertical-align: middle;
+  }
+
+  &__property {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  &__thumb {
+    width: 52px;
+    height: 40px;
+    border-radius: 6px;
+    object-fit: cover;
+    border: 1px solid $border;
+    flex-shrink: 0;
+  }
+
+  &__name {
+    display: block;
+    font-weight: 500;
+    color: $text;
+    font-size: 13px;
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__location {
+    display: block;
+    font-size: 12px;
+    color: $text-secondary;
+    margin-top: 2px;
+  }
+
+  &__badge {
+    background: rgba(26,74,58,0.08);
+    color: $primary;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 4px;
+    text-transform: capitalize;
+  }
+
+  &__price {
+    font-weight: 600;
+    color: $secondary;
+    font-size: 14px;
+  }
+
+  &__status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 20px;
+    text-transform: capitalize;
+
+    i { font-size: 7px; }
+
+    &.green { background: rgba(45,138,78,0.1); color: #2d8a4e; }
+    &.red { background: rgba(192,57,43,0.1); color: #c0392b; }
+    &.orange { background: rgba(243,156,18,0.1); color: #d68910; }
+    &.grey { background: rgba(90,90,114,0.1); color: $text-secondary; }
+    &.blue { background: rgba(52,152,219,0.1); color: #2980b9; }
+  }
+
+  &__star { color: $secondary; font-size: 16px; }
+  &__no { color: $border; }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    transition: $transition;
+    text-decoration: none;
+
+    &.view { background: rgba(26,74,58,0.08); color: $primary; &:hover { background: $primary; color: #fff; } }
+    &.edit { background: rgba(200,151,90,0.1); color: $secondary; &:hover { background: $secondary; color: #fff; } }
+    &.delete { background: rgba(192,57,43,0.08); color: #c0392b; &:hover { background: #c0392b; color: #fff; } }
+    &.danger { background: #c0392b; color: #fff; padding: 0 10px; width: auto; font-size: 12px; font-family: 'Inter', sans-serif; font-weight: 500; }
+    &.cancel { background: $bg; color: $text-secondary; border: 1px solid $border; padding: 0 10px; width: auto; font-size: 12px; font-family: 'Inter', sans-serif; }
+  }
+
+  &__confirm {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    span { font-size: 12px; color: #c0392b; font-weight: 500; }
+  }
+
+  &__message {
+    font-size: 13px;
+    color: $text-secondary;
+    max-width: 280px;
+    line-height: 1.5;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  &__sender { display: flex; flex-direction: column; gap: 2px; }
+
+  &__empty {
+    padding: 64px 32px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+
+    i { font-size: 40px; color: $border; }
+    p { font-size: 14px; color: $text-secondary; margin: 0; }
+  }
+}
+
+// ─── RESPONSIVE ───────────────────────────────────────────
+@media (max-width: 1024px) {
+  .admin {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-sidebar {
+    position: static;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    padding: 12px 16px;
+
+    &__logo { border-bottom: none; padding: 0; margin-right: 16px; }
+    &__nav { flex-direction: row; padding: 0; flex: 1; }
+    &__footer { padding: 0; border-top: none; }
+  }
+
+  .admin-main { padding: 20px; }
+
+  .admin-form__grid { grid-template-columns: 1fr; }
+  .admin-form__grid--3 { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 768px) {
+  .admin-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}

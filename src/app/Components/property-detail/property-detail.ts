@@ -133,7 +133,6 @@ export class PropertyDetail implements OnInit {
         message: this.inquiryMessage,
         userId: this.currentUserId || null,
         agentId: this.property.agentId ?? '',
-        status: 'new',
       });
       this.inquirySent = true;
       this.inquiryName = '';

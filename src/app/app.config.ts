@@ -6,7 +6,7 @@ import { provideFirestore, getFirestore } from '@angular/fire/firestore';
 import { provideStorage, getStorage } from '@angular/fire/storage';
 import { provideHttpClient } from '@angular/common/http';
 import { routes } from './app.routes';
-import { environment } from '../app/environment/environment';
+import { environment } from './environment/environment';
 
 export const appConfig: ApplicationConfig = {
   providers: [

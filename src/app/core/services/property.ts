@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {
   Firestore,
   collection,
@@ -18,9 +18,8 @@ import { Property } from './models/property.model';
 
 @Injectable({ providedIn: 'root' })
 export class PropertyService {
+  private firestore = inject(Firestore);
   private readonly collectionName = 'properties';
-
-  constructor(private firestore: Firestore) {}
 
   getAllProperties(): Observable<Property[]> {
     const ref = collection(this.firestore, this.collectionName);
@@ -54,29 +53,21 @@ export class PropertyService {
     const ref = collection(this.firestore, this.collectionName);
     const conditions: any[] = [];
 
-    if (filters.priceType) {
-      conditions.push(where('priceType', '==', filters.priceType));
-    }
-    if (filters.propertyType) {
-      conditions.push(where('propertyType', '==', filters.propertyType));
-    }
-    if (filters.city) {
-      conditions.push(where('city', '==', filters.city));
-    }
-    if (filters.bedrooms) {
-      conditions.push(where('bedrooms', '==', filters.bedrooms));
-    }
+    if (filters.priceType) conditions.push(where('priceType', '==', filters.priceType));
+    if (filters.propertyType) conditions.push(where('propertyType', '==', filters.propertyType));
+    if (filters.city) conditions.push(where('city', '==', filters.city));
+    if (filters.bedrooms) conditions.push(where('bedrooms', '==', filters.bedrooms));
 
     const q = query(ref, ...conditions, orderBy('createdAt', 'desc'));
     return collectionData(q, { idField: 'id' }) as Observable<Property[]>;
   }
 
-  addProperty(property: Omit<Property, 'id'>): Promise<any> {
+  addProperty(property: any): Promise<any> {
     const ref = collection(this.firestore, this.collectionName);
     return addDoc(ref, property);
   }
 
-  updateProperty(id: string, data: Partial<Property>): Promise<void> {
+  updateProperty(id: string, data: any): Promise<void> {
     const ref = doc(this.firestore, this.collectionName, id);
     return updateDoc(ref, { ...data });
   }

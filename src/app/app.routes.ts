@@ -10,6 +10,8 @@ import { NotFound } from './Components/not-found/not-found';
 import { Profile } from './Components/profile/profile';
 import { PropertyDetail } from './Components/property-detail/property-detail';
 import { Register } from './Components/Auth/register/register';
+import { Admin } from './Components/admin/admin';
+import { adminGuard } from './core/guards/admin-guard';
 
 export const routes: Routes = [
   { path: '', component: Home },
@@ -18,6 +20,7 @@ export const routes: Routes = [
   { path: 'favorites', component: Favorites, canActivate: [authGuard] },
   { path: 'listings', component: Listings },
   { path: 'listings/:id', component: PropertyDetail },
+  { path: 'admin', component: Admin, canActivate: [adminGuard] },
   {
     path: 'auth',
     children: [
