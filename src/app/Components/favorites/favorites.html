@@ -48,7 +48,7 @@
       </div>
 
       <div class="favorites-grid">
-        @for (property of savedProperties; track property.id; let i = $index) {
+        @for (property of paginatedProperties; track property.id; let i = $index) {
           <div class="property-card" data-aos="fade-up" [attr.data-aos-delay]="(i % 3) * 100">
 
             <a [routerLink]="['/listings', property.id]" class="property-card__img-wrap">
@@ -90,6 +90,15 @@
           </div>
         }
       </div>
+
+      @if (totalPages > 1) {
+        <app-pagination
+          [currentPage]="currentPage"
+          [totalPages]="totalPages"
+          [totalItems]="savedProperties.length"
+          (pageChange)="onPageChange($event)"
+        />
+      }
     }
 
   </div>

@@ -235,7 +235,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (property of properties; track property.id) {
+              @for (property of paginatedProperties; track property.id) {
                 <tr>
                   <td>
                     <div class="admin-table__property">
@@ -297,6 +297,15 @@
           }
         </div>
 
+        @if (propertiesTotalPages > 1) {
+          <app-pagination
+            [currentPage]="propertiesPage"
+            [totalPages]="propertiesTotalPages"
+            [totalItems]="properties.length"
+            (pageChange)="onPropertiesPageChange($event)"
+          />
+        }
+
       </div>
     }
 
@@ -322,7 +331,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (inquiry of inquiries; track inquiry.id) {
+              @for (inquiry of paginatedInquiries; track inquiry.id) {
                 <tr [class.unread]="inquiry.status === 'new'">
                   <td>
                     <div class="admin-table__sender">
@@ -368,6 +377,15 @@
             </div>
           }
         </div>
+
+        @if (inquiriesTotalPages > 1) {
+          <app-pagination
+            [currentPage]="inquiriesPage"
+            [totalPages]="inquiriesTotalPages"
+            [totalItems]="inquiries.length"
+            (pageChange)="onInquiriesPageChange($event)"
+          />
+        }
       </div>
     }
 

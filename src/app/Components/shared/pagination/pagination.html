@@ -1,0 +1,45 @@
+@if (totalPages > 1) {
+  <nav class="pagination" aria-label="Page navigation">
+    <p class="pagination__info">
+      Page {{ currentPage }} of {{ totalPages }}
+      @if (totalItems > 0) {
+        <span>({{ totalItems }} total)</span>
+      }
+    </p>
+
+    <div class="pagination__controls">
+      <button
+        type="button"
+        class="pagination__btn pagination__btn--arrow"
+        [disabled]="currentPage === 1"
+        (click)="goToPage(currentPage - 1)"
+        aria-label="Previous page">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+
+      @for (page of pages; track $index) {
+        @if (page === -1) {
+          <span class="pagination__ellipsis">…</span>
+        } @else {
+          <button
+            type="button"
+            class="pagination__btn"
+            [class.pagination__btn--active]="page === currentPage"
+            (click)="goToPage(page)"
+            [attr.aria-current]="page === currentPage ? 'page' : null">
+            {{ page }}
+          </button>
+        }
+      }
+
+      <button
+        type="button"
+        class="pagination__btn pagination__btn--arrow"
+        [disabled]="currentPage === totalPages"
+        (click)="goToPage(currentPage + 1)"
+        aria-label="Next page">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+    </div>
+  </nav>
+}

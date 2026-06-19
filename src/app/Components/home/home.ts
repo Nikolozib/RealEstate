@@ -1,21 +1,33 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { firstValueFrom } from 'rxjs';
 import { PropertyService } from '../../core/services/property';
 import { Property } from '../../core/services/models/property.model';
 import { SeoService } from '../../core/services/seo';
+import { Pagination } from '../shared/pagination/pagination';
+import {
+  PAGE_SIZE,
+  paginateItems,
+  getTotalPages,
+  clampPage,
+} from '../../core/utils/pagination';
 import * as AOS from 'aos';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterLink, CommonModule],
+  imports: [RouterLink, CommonModule, Pagination],
   templateUrl: './home.html',
   styleUrl: './home.scss'
 })
 export class Home implements OnInit, OnDestroy {
   featuredProperties: Property[] = [];
+  paginatedFeatured: Property[] = [];
   loading = true;
+  currentPage = 1;
+  totalPages = 1;
+  readonly pageSize = PAGE_SIZE;
 
   currentSlide = 0;
   private slideInterval: any;
@@ -71,7 +83,8 @@ export class Home implements OnInit, OnDestroy {
 
   constructor(
     private propertyService: PropertyService,
-    private seo: SeoService
+    private seo: SeoService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -80,13 +93,58 @@ export class Home implements OnInit, OnDestroy {
       'Browse premium apartments, houses and villas for sale and rent across Tbilisi and Georgia.'
     );
 
-    this.propertyService.getFeaturedProperties().subscribe(props => {
-      this.featuredProperties = props;
-      this.loading = false;
-    });
-
+    this.loadFeaturedProperties();
     this.startSlider();
     AOS.init({ duration: 800, easing: 'ease-in-out', once: true, offset: 60 });
+  }
+
+  private async loadFeaturedProperties() {
+    this.loading = true;
+
+    try {
+      let props = await firstValueFrom(this.propertyService.getFeaturedProperties());
+      if (!props.length) {
+        props = await firstValueFrom(this.propertyService.getLatestProperties(100));
+      }
+      this.featuredProperties = props;
+      this.updatePagination();
+      setTimeout(() => AOS.refresh(), 50);
+    } catch (err) {
+      console.error('Failed to load featured properties:', err);
+      try {
+        this.featuredProperties = await firstValueFrom(
+          this.propertyService.getLatestProperties(100)
+        );
+        this.updatePagination();
+      } catch {
+        this.featuredProperties = [];
+        this.updatePagination();
+      }
+    } finally {
+      this.loading = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  private updatePagination() {
+    this.totalPages = getTotalPages(this.featuredProperties.length, this.pageSize);
+    this.currentPage = clampPage(this.currentPage, this.totalPages);
+    this.paginatedFeatured = paginateItems(
+      this.featuredProperties,
+      this.currentPage,
+      this.pageSize
+    );
+  }
+
+  onPageChange(page: number) {
+    this.currentPage = page;
+    this.paginatedFeatured = paginateItems(
+      this.featuredProperties,
+      this.currentPage,
+      this.pageSize
+    );
+    setTimeout(() => AOS.refresh(), 50);
+    document.querySelector('.featured')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   ngOnDestroy() {

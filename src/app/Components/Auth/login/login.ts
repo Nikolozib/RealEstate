@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth';
+import { isValidEmail } from '../../../core/utils/validation';
 
 @Component({
   selector: 'app-login',
@@ -25,6 +26,11 @@ export class Login {
   async login() {
     if (!this.email || !this.password) {
       this.error = 'Please fill in all fields.';
+      return;
+    }
+
+    if (!isValidEmail(this.email)) {
+      this.error = 'Please enter a valid email address.';
       return;
     }
 

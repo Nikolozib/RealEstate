@@ -3,6 +3,12 @@ import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth';
 import { UserService } from '../../../core/services/user';
+import {
+  isValidEmail,
+  isValidName,
+  isValidPassword,
+  isValidPhone,
+} from '../../../core/utils/validation';
 
 @Component({
   selector: 'app-register',
@@ -34,13 +40,28 @@ export class Register {
       return;
     }
 
-    if (this.password !== this.confirmPassword) {
-      this.error = 'Passwords do not match.';
+    if (!isValidName(this.displayName)) {
+      this.error = 'Please enter a valid name (letters only, at least 2 characters).';
       return;
     }
 
-    if (this.password.length < 6) {
+    if (!isValidEmail(this.email)) {
+      this.error = 'Please enter a valid email address.';
+      return;
+    }
+
+    if (this.phone.trim() && !isValidPhone(this.phone)) {
+      this.error = 'Please enter a valid phone number (digits only, 7–15 digits).';
+      return;
+    }
+
+    if (!isValidPassword(this.password)) {
       this.error = 'Password must be at least 6 characters.';
+      return;
+    }
+
+    if (this.password !== this.confirmPassword) {
+      this.error = 'Passwords do not match.';
       return;
     }
 

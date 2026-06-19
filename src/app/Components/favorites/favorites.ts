@@ -1,29 +1,44 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { take } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/services/auth';
 import { UserService } from '../../core/services/user';
 import { PropertyService } from '../../core/services/property';
 import { SeoService } from '../../core/services/seo';
 import { Property } from '../../core/services/models/property.model';
+import { Pagination } from '../shared/pagination/pagination';
+import {
+  PAGE_SIZE,
+  paginateItems,
+  getTotalPages,
+  clampPage,
+} from '../../core/utils/pagination';
 import * as AOS from 'aos';
 
 @Component({
   selector: 'app-favorites',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, Pagination],
   templateUrl: './favorites.html',
   styleUrl: './favorites.scss'
 })
 export class Favorites implements OnInit {
   savedProperties: Property[] = [];
+  paginatedProperties: Property[] = [];
   loading = true;
+  loadError = false;
   currentUserId = '';
+  currentPage = 1;
+  totalPages = 1;
+  readonly pageSize = PAGE_SIZE;
 
   constructor(
     private authService: AuthService,
     private userService: UserService,
     private propertyService: PropertyService,
-    private seo: SeoService
+    private seo: SeoService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -31,48 +46,83 @@ export class Favorites implements OnInit {
       'Saved Properties | RealEstate Georgia',
       'Your saved and favorite property listings.'
     );
-
     AOS.init({ duration: 700, easing: 'ease-in-out', once: true, offset: 40 });
 
-    this.authService.isLoggedIn$.subscribe(loggedIn => {
-      if (loggedIn) {
-        this.loadSavedProperties();
+    this.authService.currentUser$.pipe(take(1)).subscribe(currentUser => {
+      if (!currentUser) {
+        this.loading = false;
+        this.cdr.detectChanges();
+        return;
       }
+      this.loadSavedProperties(currentUser.uid);
     });
   }
 
-  loadSavedProperties() {
-    const user = this.authService.getCurrentUser();
-    if (!user) return;
-    this.currentUserId = user.uid;
+  async loadSavedProperties(uid: string) {
+    this.loading = true;
+    this.loadError = false;
+    this.currentUserId = uid;
+    this.currentPage = 1;
 
-    this.userService.getUserById(user.uid).subscribe(userData => {
+    try {
+      const userData = await firstValueFrom(this.userService.getUserById(uid));
+
       if (!userData?.savedProperties?.length) {
         this.savedProperties = [];
-        this.loading = false;
+        this.updatePagination();
         return;
       }
 
-      const ids = userData.savedProperties;
-      const fetched: Property[] = [];
-      let count = 0;
-
-      ids.forEach(id => {
-        this.propertyService.getPropertyById(id).subscribe(prop => {
-          if (prop) fetched.push(prop);
-          count++;
-          if (count === ids.length) {
-            this.savedProperties = fetched;
-            this.loading = false;
-          }
-        });
-      });
-    });
+      this.savedProperties = await this.propertyService.getPropertiesByIds(
+        userData.savedProperties
+      );
+      this.updatePagination();
+      setTimeout(() => AOS.refresh(), 50);
+    } catch (e) {
+      console.error('Failed to load saved properties:', e);
+      this.loadError = true;
+      this.savedProperties = [];
+      this.updatePagination();
+    } finally {
+      this.loading = false;
+      this.cdr.detectChanges();
+    }
   }
 
-  unsave(propertyId: string) {
-    this.userService.unsaveProperty(this.currentUserId, propertyId);
+  private updatePagination() {
+    this.totalPages = getTotalPages(this.savedProperties.length, this.pageSize);
+    this.currentPage = clampPage(this.currentPage, this.totalPages);
+    this.paginatedProperties = paginateItems(
+      this.savedProperties,
+      this.currentPage,
+      this.pageSize
+    );
+  }
+
+  onPageChange(page: number) {
+    this.currentPage = page;
+    this.paginatedProperties = paginateItems(
+      this.savedProperties,
+      this.currentPage,
+      this.pageSize
+    );
+    setTimeout(() => AOS.refresh(), 50);
+    document.querySelector('.favorites-main')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async unsave(propertyId: string) {
     this.savedProperties = this.savedProperties.filter(p => p.id !== propertyId);
+    this.updatePagination();
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = this.totalPages;
+      this.updatePagination();
+    }
+    try {
+      await this.userService.unsaveProperty(this.currentUserId, propertyId);
+    } catch (e) {
+      console.error('Failed to unsave:', e);
+      await this.loadSavedProperties(this.currentUserId);
+    }
   }
 
   formatPrice(price: number, type: string): string {

@@ -2,6 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { InquiryService } from '../../core/services/inquiry';
 import { SeoService } from '../../core/services/seo';
+import {
+  isValidEmail,
+  isValidMessage,
+  isValidName,
+  isValidPhone,
+} from '../../core/utils/validation';
 import * as AOS from 'aos';
 
 @Component({
@@ -58,6 +64,26 @@ export class Contact implements OnInit {
   async send() {
     if (!this.name || !this.email || !this.message) {
       this.error = 'Please fill in all required fields.';
+      return;
+    }
+
+    if (!isValidName(this.name)) {
+      this.error = 'Please enter a valid name (letters only, at least 2 characters).';
+      return;
+    }
+
+    if (!isValidEmail(this.email)) {
+      this.error = 'Please enter a valid email address.';
+      return;
+    }
+
+    if (this.phone.trim() && !isValidPhone(this.phone)) {
+      this.error = 'Please enter a valid phone number (digits only, 7–15 digits).';
+      return;
+    }
+
+    if (!isValidMessage(this.message)) {
+      this.error = 'Message must be at least 10 characters.';
       return;
     }
 

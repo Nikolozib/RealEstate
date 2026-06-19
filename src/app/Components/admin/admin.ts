@@ -1,6 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { take } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/services/auth';
 import { UserService } from '../../core/services/user';
 import { PropertyService } from '../../core/services/property';
@@ -8,13 +10,20 @@ import { InquiryService } from '../../core/services/inquiry';
 import { SeoService } from '../../core/services/seo';
 import { Property } from '../../core/services/models/property.model';
 import { Inquiry } from '../../core/services/models/inquiry.model';
-import { serverTimestamp, Timestamp } from '@angular/fire/firestore';
+import { serverTimestamp } from '@angular/fire/firestore';
+import { Pagination } from '../shared/pagination/pagination';
+import {
+  PAGE_SIZE,
+  paginateItems,
+  getTotalPages,
+  clampPage,
+} from '../../core/utils/pagination';
 import * as AOS from 'aos';
 
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [RouterLink, FormsModule],
+  imports: [RouterLink, FormsModule, Pagination],
   templateUrl: './admin.html',
   styleUrl: './admin.scss',
 })
@@ -24,9 +33,15 @@ export class Admin implements OnInit {
   isAdmin = false;
 
   properties: Property[] = [];
+  paginatedProperties: Property[] = [];
   inquiries: Inquiry[] = [];
+  paginatedInquiries: Inquiry[] = [];
+  propertiesPage = 1;
+  inquiriesPage = 1;
+  propertiesTotalPages = 1;
+  inquiriesTotalPages = 1;
+  readonly pageSize = PAGE_SIZE;
 
-  // Add/Edit form
   formMode: 'add' | 'edit' | null = null;
   editingId: string | null = null;
   formSaving = false;
@@ -40,14 +55,8 @@ export class Admin implements OnInit {
   priceTypes = ['sale', 'rent'];
   statusOptions = ['available', 'sold', 'rented'];
   featureOptions = [
-    'balcony',
-    'elevator',
-    'furnished',
-    'pool',
-    'garden',
-    'parking',
-    'security',
-    'gym',
+    'balcony', 'elevator', 'furnished', 'pool',
+    'garden', 'parking', 'security', 'gym',
   ];
 
   constructor(
@@ -57,6 +66,7 @@ export class Admin implements OnInit {
     private inquiryService: InquiryService,
     private seo: SeoService,
     private router: Router,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit() {
@@ -69,7 +79,8 @@ export class Admin implements OnInit {
       return;
     }
 
-    this.userService.getUserById(user.uid).subscribe((userData) => {
+    // take(1) — we only need the role check once, not a live stream
+    this.userService.getUserById(user.uid).pipe(take(1)).subscribe((userData) => {
       if (userData?.role !== 'admin' && userData?.role !== 'agent') {
         this.router.navigate(['/']);
         return;
@@ -79,15 +90,25 @@ export class Admin implements OnInit {
     });
   }
 
-  loadData() {
-    this.propertyService.getAllProperties().subscribe((props) => {
-      this.properties = props;
-      this.loading = false;
-    });
+  async loadData() {
+    this.loading = true;
+    try {
+      // Single getDocs call — no persistent listener
+      this.properties = await this.propertyService.getAllPropertiesForAdmin();
 
-    this.inquiryService.getInquiriesByAgent('').subscribe((inq) => {
-      this.inquiries = inq;
-    });
+      // Inquiries: keep existing Observable but complete it immediately
+      this.inquiries = await firstValueFrom(
+        this.inquiryService.getInquiriesByAgent('').pipe(take(1))
+      );
+      this.updatePropertiesPagination();
+      this.updateInquiriesPagination();
+      setTimeout(() => AOS.refresh(), 50);
+    } catch (e) {
+      console.error('Failed to load admin data:', e);
+    } finally {
+      this.loading = false;
+      this.cdr.detectChanges();
+    }
   }
 
   setTab(tab: string) {
@@ -95,6 +116,44 @@ export class Admin implements OnInit {
     this.formMode = null;
     this.formError = '';
     this.formSuccess = '';
+  }
+
+  private updatePropertiesPagination() {
+    this.propertiesTotalPages = getTotalPages(this.properties.length, this.pageSize);
+    this.propertiesPage = clampPage(this.propertiesPage, this.propertiesTotalPages);
+    this.paginatedProperties = paginateItems(
+      this.properties,
+      this.propertiesPage,
+      this.pageSize
+    );
+  }
+
+  private updateInquiriesPagination() {
+    this.inquiriesTotalPages = getTotalPages(this.inquiries.length, this.pageSize);
+    this.inquiriesPage = clampPage(this.inquiriesPage, this.inquiriesTotalPages);
+    this.paginatedInquiries = paginateItems(
+      this.inquiries,
+      this.inquiriesPage,
+      this.pageSize
+    );
+  }
+
+  onPropertiesPageChange(page: number) {
+    this.propertiesPage = page;
+    this.paginatedProperties = paginateItems(
+      this.properties,
+      this.propertiesPage,
+      this.pageSize
+    );
+  }
+
+  onInquiriesPageChange(page: number) {
+    this.inquiriesPage = page;
+    this.paginatedInquiries = paginateItems(
+      this.inquiries,
+      this.inquiriesPage,
+      this.pageSize
+    );
   }
 
   emptyForm() {
@@ -173,11 +232,8 @@ export class Admin implements OnInit {
 
   toggleFeature(feature: string) {
     const idx = this.form.features.indexOf(feature);
-    if (idx > -1) {
-      this.form.features.splice(idx, 1);
-    } else {
-      this.form.features.push(feature);
-    }
+    if (idx > -1) this.form.features.splice(idx, 1);
+    else this.form.features.push(feature);
   }
 
   hasFeature(feature: string): boolean {
@@ -226,6 +282,9 @@ export class Admin implements OnInit {
       }
       this.formMode = null;
       this.editingId = null;
+      // Reload the list so the new/updated item appears immediately
+      await this.loadData();
+      setTimeout(() => (this.formSuccess = ''), 3000);
     } catch (e) {
       this.formError = 'Failed to save property. Please try again.';
     } finally {
@@ -245,6 +304,9 @@ export class Admin implements OnInit {
     try {
       await this.propertyService.deleteProperty(id);
       this.deleteConfirmId = null;
+      // Remove locally for instant feedback, then reload to sync
+      this.properties = this.properties.filter(p => p.id !== id);
+      this.updatePropertiesPagination();
       this.formSuccess = 'Property deleted.';
       setTimeout(() => (this.formSuccess = ''), 3000);
     } catch (e) {
@@ -254,32 +316,23 @@ export class Admin implements OnInit {
 
   async markInquiryRead(id: string) {
     await this.inquiryService.updateInquiryStatus(id, 'read');
+    // Update locally so the UI reflects the change without a full reload
+    const inq = this.inquiries.find(i => i.id === id);
+    if (inq) inq.status = 'read';
   }
 
   getStatusColor(status: string): string {
-    switch (status) {
-      case 'available':
-        return 'green';
-      case 'sold':
-        return 'red';
-      case 'rented':
-        return 'orange';
-      default:
-        return 'grey';
-    }
+    const map: Record<string, string> = {
+      available: 'green', sold: 'red', rented: 'orange',
+    };
+    return map[status] ?? 'grey';
   }
 
   getInquiryStatusColor(status: string): string {
-    switch (status) {
-      case 'new':
-        return 'blue';
-      case 'read':
-        return 'grey';
-      case 'replied':
-        return 'green';
-      default:
-        return 'grey';
-    }
+    const map: Record<string, string> = {
+      new: 'blue', read: 'grey', replied: 'green',
+    };
+    return map[status] ?? 'grey';
   }
 
   formatPrice(price: number, type: string): string {

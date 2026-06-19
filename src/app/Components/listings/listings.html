@@ -18,11 +18,11 @@
         type="text"
         placeholder="Search by title, city, district..."
         [(ngModel)]="searchQuery"
-        (ngModelChange)="applyFilters()"
+        (ngModelChange)="onClientFilterChange()"
         class="filter-bar__input"
       />
       @if (searchQuery) {
-        <button class="filter-bar__clear-search" (click)="searchQuery=''; applyFilters()">
+        <button class="filter-bar__clear-search" (click)="searchQuery=''; onClientFilterChange()">
           <i class="fa-solid fa-xmark"></i>
         </button>
       }
@@ -30,19 +30,20 @@
 
     <div class="filter-bar__selects">
 
-      <select [(ngModel)]="selectedPriceType" (ngModelChange)="applyFilters()" class="filter-bar__select">
+      <!-- Server-side filters → onFirestoreFilterChange() -->
+      <select [(ngModel)]="selectedPriceType" (ngModelChange)="onFirestoreFilterChange()" class="filter-bar__select">
         @for (opt of priceTypes; track opt.value) {
           <option [value]="opt.value">{{ opt.label }}</option>
         }
       </select>
 
-      <select [(ngModel)]="selectedPropertyType" (ngModelChange)="applyFilters()" class="filter-bar__select">
+      <select [(ngModel)]="selectedPropertyType" (ngModelChange)="onFirestoreFilterChange()" class="filter-bar__select">
         @for (opt of propertyTypes; track opt.value) {
           <option [value]="opt.value">{{ opt.label }}</option>
         }
       </select>
 
-      <select [(ngModel)]="selectedCity" (ngModelChange)="applyFilters()" class="filter-bar__select">
+      <select [(ngModel)]="selectedCity" (ngModelChange)="onFirestoreFilterChange()" class="filter-bar__select">
         @for (opt of cities; track opt.value) {
           <option [value]="opt.value">{{ opt.label }}</option>
         }
@@ -55,15 +56,14 @@
           <span class="filter-bar__badge">{{ activeFilterCount }}</span>
         }
       </button>
-
     </div>
   </div>
 
-  <!-- EXPANDED FILTERS -->
   @if (filtersOpen) {
     <div class="filter-bar__expanded">
       <div class="filter-bar__container filter-bar__container--expanded">
 
+        <!-- Client-side filters → applyFilters() -->
         <div class="filter-bar__group">
           <label class="filter-bar__label">Bedrooms</label>
           <div class="filter-bar__chips">
@@ -71,7 +71,7 @@
               <button
                 class="filter-chip"
                 [class.active]="selectedBedrooms === opt.value"
-                (click)="selectedBedrooms = opt.value; applyFilters()">
+                (click)="selectedBedrooms = opt.value; onClientFilterChange()">
                 {{ opt.label }}
               </button>
             }
@@ -92,18 +92,14 @@
             <input
               type="range"
               class="price-slider__input price-slider__input--min"
-              [min]="priceMin"
-              [max]="priceMax"
-              [step]="stepSize"
+              [min]="priceMin" [max]="priceMax" [step]="stepSize"
               [(ngModel)]="priceRange[0]"
               (ngModelChange)="onMinChange($event)"
             />
             <input
               type="range"
               class="price-slider__input price-slider__input--max"
-              [min]="priceMin"
-              [max]="priceMax"
-              [step]="stepSize"
+              [min]="priceMin" [max]="priceMax" [step]="stepSize"
               [(ngModel)]="priceRange[1]"
               (ngModelChange)="onMaxChange($event)"
             />
@@ -121,7 +117,7 @@
   }
 </section>
 
-<!-- RESULTS HEADER -->
+<!-- RESULTS -->
 <section class="listings-main">
   <div class="listings-main__container">
 
@@ -129,6 +125,8 @@
       <p class="listings-main__count">
         @if (loading) {
           Loading properties...
+        } @else if (loadError) {
+          Failed to load
         } @else {
           <strong>{{ filteredProperties.length }}</strong>
           {{ filteredProperties.length === 1 ? 'property' : 'properties' }} found
@@ -144,7 +142,7 @@
         <label class="listings-main__sort-label">
           <i class="fa-solid fa-arrow-up-wide-short"></i> Sort:
         </label>
-        <select [(ngModel)]="sortBy" (ngModelChange)="applyFilters()" class="listings-main__sort-select">
+        <select [(ngModel)]="sortBy" (ngModelChange)="onClientFilterChange()" class="listings-main__sort-select">
           @for (opt of sortOptions; track opt.value) {
             <option [value]="opt.value">{{ opt.label }}</option>
           }
@@ -152,7 +150,7 @@
       </div>
     </div>
 
-    <!-- LOADING SKELETONS -->
+    <!-- LOADING SKELETONS (initial load) -->
     @if (loading) {
       <div class="listings-grid">
         @for (i of [1,2,3,4,5,6]; track i) {
@@ -168,10 +166,22 @@
       </div>
     }
 
+    <!-- ERROR STATE -->
+    @if (loadError) {
+      <div class="listings-empty" data-aos="fade-up">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <h3>Failed to load properties</h3>
+        <p>Something went wrong connecting to the server. Please try again.</p>
+        <button class="btn btn--primary" (click)="retry()">
+          <i class="fa-solid fa-rotate-right"></i> Try Again
+        </button>
+      </div>
+    }
+
     <!-- PROPERTY GRID -->
-    @if (!loading && filteredProperties.length > 0) {
+    @if (!loading && !loadError && filteredProperties.length > 0) {
       <div class="listings-grid">
-        @for (property of filteredProperties; track property.id; let i = $index) {
+        @for (property of paginatedProperties; track property.id; let i = $index) {
           <a
             [routerLink]="['/listings', property.id]"
             class="property-card"
@@ -224,7 +234,7 @@
     }
 
     <!-- EMPTY STATE -->
-    @if (!loading && filteredProperties.length === 0) {
+    @if (!loading && !loadError && filteredProperties.length === 0) {
       <div class="listings-empty" data-aos="fade-up">
         <i class="fa-solid fa-house-circle-xmark"></i>
         <h3>No properties found</h3>
@@ -233,6 +243,15 @@
           <i class="fa-solid fa-rotate-left"></i> Clear All Filters
         </button>
       </div>
+    }
+
+    @if (!loading && !loadError && filteredProperties.length > 0) {
+      <app-pagination
+        [currentPage]="currentPage"
+        [totalPages]="totalPages"
+        [totalItems]="filteredProperties.length"
+        (pageChange)="onPageChange($event)"
+      />
     }
 
   </div>

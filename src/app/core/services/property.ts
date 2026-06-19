@@ -2,31 +2,119 @@ import { Injectable, inject } from '@angular/core';
 import {
   Firestore,
   collection,
-  collectionData,
   doc,
-  docData,
+  getDoc,
+  getDocs,
   addDoc,
   updateDoc,
   deleteDoc,
   query,
   where,
   orderBy,
-  increment
+  limit,
+  startAfter,
+  increment,
+  documentId,
+  QueryDocumentSnapshot
 } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
+import { Observable, from } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Property } from './models/property.model';
 
 @Injectable({ providedIn: 'root' })
 export class PropertyService {
   private firestore = inject(Firestore);
   private readonly collectionName = 'properties';
+  private readonly PAGE_SIZE = 12;
 
-  getAllProperties(): Observable<Property[]> {
-    const ref = collection(this.firestore, this.collectionName);
-    const q = query(ref, orderBy('createdAt', 'desc'));
-    return collectionData(q, { idField: 'id' }) as Observable<Property[]>;
+  private lastVisible: QueryDocumentSnapshot | null = null;
+  private hasMorePages = true;
+
+  get hasMore(): boolean {
+    return this.hasMorePages;
   }
 
+  resetPagination(): void {
+    this.lastVisible = null;
+    this.hasMorePages = true;
+  }
+
+  // ── Paginated fetch (used by Listings page) ──────────────────────────────
+  async getPropertiesPage(filters: {
+    priceType?: string;
+    propertyType?: string;
+    city?: string;
+  } = {}): Promise<{ properties: Property[]; hasMore: boolean }> {
+    if (!this.hasMorePages) return { properties: [], hasMore: false };
+
+    const ref = collection(this.firestore, this.collectionName);
+    const conditions: any[] = [];
+
+    if (filters.priceType)    conditions.push(where('priceType', '==', filters.priceType));
+    if (filters.propertyType) conditions.push(where('propertyType', '==', filters.propertyType));
+    if (filters.city)         conditions.push(where('city', '==', filters.city));
+
+    conditions.push(orderBy('createdAt', 'desc'));
+    if (this.lastVisible) conditions.push(startAfter(this.lastVisible));
+    conditions.push(limit(this.PAGE_SIZE));
+
+    const snapshot = await getDocs(query(ref, ...conditions));
+
+    this.hasMorePages = snapshot.docs.length === this.PAGE_SIZE;
+    this.lastVisible = snapshot.docs[snapshot.docs.length - 1] ?? null;
+
+    const properties = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Property));
+    return { properties, hasMore: this.hasMorePages };
+  }
+
+  async getAllPropertiesFiltered(filters: {
+    priceType?: string;
+    propertyType?: string;
+    city?: string;
+  } = {}): Promise<Property[]> {
+    this.resetPagination();
+    const all: Property[] = [];
+    let hasMore = true;
+
+    while (hasMore) {
+      const page = await this.getPropertiesPage(filters);
+      all.push(...page.properties);
+      hasMore = page.hasMore;
+    }
+
+    return all;
+  }
+
+  // ── Full fetch for Admin panel (no pagination) ───────────────────────────
+  getAllPropertiesForAdmin(): Promise<Property[]> {
+    const ref = collection(this.firestore, this.collectionName);
+    const q = query(ref, orderBy('createdAt', 'desc'));
+    return getDocs(q).then(snap =>
+      snap.docs.map(d => ({ id: d.id, ...d.data() } as Property))
+    );
+  }
+
+  // ── Batch fetch by IDs (used by Favorites page) ──────────────────────────
+  // Firestore 'in' supports max 30 items — chunks automatically
+  async getPropertiesByIds(ids: string[]): Promise<Property[]> {
+    if (!ids.length) return [];
+
+    const chunks: string[][] = [];
+    for (let i = 0; i < ids.length; i += 30) {
+      chunks.push(ids.slice(i, i + 30));
+    }
+
+    const results: Property[] = [];
+    for (const chunk of chunks) {
+      const ref = collection(this.firestore, this.collectionName);
+      const q = query(ref, where(documentId(), 'in', chunk));
+      const snap = await getDocs(q);
+      results.push(...snap.docs.map(d => ({ id: d.id, ...d.data() } as Property)));
+    }
+    return results;
+  }
+
+  // ── Featured (home page) ─────────────────────────────────────────────────
   getFeaturedProperties(): Observable<Property[]> {
     const ref = collection(this.firestore, this.collectionName);
     const q = query(
@@ -34,34 +122,30 @@ export class PropertyService {
       where('isFeatured', '==', true),
       orderBy('createdAt', 'desc')
     );
-    return collectionData(q, { idField: 'id' }) as Observable<Property[]>;
+    return from(getDocs(q)).pipe(
+      map(snap => snap.docs.map(d => ({ id: d.id, ...d.data() } as Property)))
+    );
   }
 
-  getPropertyById(id: string): Observable<Property> {
-    const ref = doc(this.firestore, this.collectionName, id);
-    return docData(ref, { idField: 'id' }) as Observable<Property>;
-  }
-
-  getPropertiesByFilter(filters: {
-    priceType?: string;
-    propertyType?: string;
-    city?: string;
-    minPrice?: number;
-    maxPrice?: number;
-    bedrooms?: number;
-  }): Observable<Property[]> {
+  getLatestProperties(count = 6): Observable<Property[]> {
     const ref = collection(this.firestore, this.collectionName);
-    const conditions: any[] = [];
-
-    if (filters.priceType) conditions.push(where('priceType', '==', filters.priceType));
-    if (filters.propertyType) conditions.push(where('propertyType', '==', filters.propertyType));
-    if (filters.city) conditions.push(where('city', '==', filters.city));
-    if (filters.bedrooms) conditions.push(where('bedrooms', '==', filters.bedrooms));
-
-    const q = query(ref, ...conditions, orderBy('createdAt', 'desc'));
-    return collectionData(q, { idField: 'id' }) as Observable<Property[]>;
+    const q = query(ref, orderBy('createdAt', 'desc'), limit(count));
+    return from(getDocs(q)).pipe(
+      map(snap => snap.docs.map(d => ({ id: d.id, ...d.data() } as Property)))
+    );
   }
 
+  // ── Single doc ───────────────────────────────────────────────────────────
+  getPropertyById(id: string): Observable<Property | null> {
+    const ref = doc(this.firestore, this.collectionName, id);
+    return from(getDoc(ref)).pipe(
+      map(snap =>
+        snap.exists() ? ({ id: snap.id, ...snap.data() } as Property) : null
+      )
+    );
+  }
+
+  // ── Mutations ────────────────────────────────────────────────────────────
   addProperty(property: any): Promise<any> {
     const ref = collection(this.firestore, this.collectionName);
     return addDoc(ref, property);

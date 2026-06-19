@@ -1,24 +1,35 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { PropertyService } from '../../core/services/property';
 import { Property } from '../../core/services/models/property.model';
 import { SeoService } from '../../core/services/seo';
+import { Pagination } from '../shared/pagination/pagination';
+import {
+  PAGE_SIZE,
+  paginateItems,
+  getTotalPages,
+  clampPage,
+} from '../../core/utils/pagination';
 import * as AOS from 'aos';
 
 @Component({
   selector: 'app-listings',
   standalone: true,
-  imports: [RouterLink, FormsModule],
+  imports: [RouterLink, FormsModule, Pagination],
   templateUrl: './listings.html',
   styleUrl: './listings.scss'
 })
 export class Listings implements OnInit {
   allProperties: Property[] = [];
   filteredProperties: Property[] = [];
+  paginatedProperties: Property[] = [];
   loading = true;
+  loadError = false;
+  currentPage = 1;
+  totalPages = 1;
+  readonly pageSize = PAGE_SIZE;
 
-  // Filters
   searchQuery = '';
   selectedPriceType = '';
   selectedPropertyType = '';
@@ -26,13 +37,11 @@ export class Listings implements OnInit {
   selectedBedrooms = '';
   sortBy = 'newest';
 
-  // Price slider
   priceMin = 0;
   priceMax = 1000000;
   stepSize = 5000;
   priceRange = [0, 1000000];
 
-  // UI state
   filtersOpen = false;
   activeFilterCount = 0;
 
@@ -56,7 +65,10 @@ export class Listings implements OnInit {
     { value: 'Tbilisi', label: 'Tbilisi' },
     { value: 'Batumi', label: 'Batumi' },
     { value: 'Rustavi', label: 'Rustavi' },
-    { value: 'Kutaisi', label: 'Kutaisi' }
+    { value: 'Kutaisi', label: 'Kutaisi' },
+    { value: 'Mtskheta', label: 'Mtskheta' },
+    { value: 'Telavi', label: 'Telavi' },
+    { value: 'Ureki', label: 'Ureki' }
   ];
 
   bedroomOptions = [
@@ -77,7 +89,8 @@ export class Listings implements OnInit {
   constructor(
     private propertyService: PropertyService,
     private seo: SeoService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -91,13 +104,45 @@ export class Listings implements OnInit {
       if (params['priceType']) this.selectedPriceType = params['priceType'];
     });
 
-    this.propertyService.getAllProperties().subscribe(props => {
-      this.allProperties = props;
-      this.applyFilters();
-      this.loading = false;
-    });
-
+    this.loadProperties();
     AOS.init({ duration: 700, easing: 'ease-in-out', once: true, offset: 40 });
+  }
+
+  private getFirestoreFilters() {
+    return {
+      priceType: this.selectedPriceType || undefined,
+      propertyType: this.selectedPropertyType || undefined,
+      city: this.selectedCity || undefined,
+    };
+  }
+
+  async loadProperties() {
+    this.loading = true;
+    this.loadError = false;
+    this.allProperties = [];
+    this.currentPage = 1;
+
+    try {
+      this.allProperties = await this.propertyService.getAllPropertiesFiltered(
+        this.getFirestoreFilters()
+      );
+      this.applyFilters();
+      setTimeout(() => AOS.refresh(), 50);
+    } catch (err) {
+      console.error('Failed to load properties:', err);
+      this.loadError = true;
+    } finally {
+      this.loading = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  retry() {
+    this.loadProperties();
+  }
+
+  onFirestoreFilterChange() {
+    this.loadProperties();
   }
 
   applyFilters() {
@@ -113,41 +158,18 @@ export class Listings implements OnInit {
       );
     }
 
-    if (this.selectedPriceType) {
-      result = result.filter(p => p.priceType === this.selectedPriceType);
-    }
-
-    if (this.selectedPropertyType) {
-      result = result.filter(p => p.propertyType === this.selectedPropertyType);
-    }
-
-    if (this.selectedCity) {
-      result = result.filter(p => p.city === this.selectedCity);
-    }
-
     if (this.selectedBedrooms) {
       const min = parseInt(this.selectedBedrooms);
       result = result.filter(p => p.bedrooms >= min);
     }
 
-    if (this.priceRange[0] > this.priceMin) {
-      result = result.filter(p => p.price >= this.priceRange[0]);
-    }
-
-    if (this.priceRange[1] < this.priceMax) {
-      result = result.filter(p => p.price <= this.priceRange[1]);
-    }
+    if (this.priceRange[0] > this.priceMin) result = result.filter(p => p.price >= this.priceRange[0]);
+    if (this.priceRange[1] < this.priceMax) result = result.filter(p => p.price <= this.priceRange[1]);
 
     switch (this.sortBy) {
-      case 'price_asc':
-        result.sort((a, b) => a.price - b.price);
-        break;
-      case 'price_desc':
-        result.sort((a, b) => b.price - a.price);
-        break;
-      case 'area_desc':
-        result.sort((a, b) => b.area - a.area);
-        break;
+      case 'price_asc': result.sort((a, b) => a.price - b.price); break;
+      case 'price_desc': result.sort((a, b) => b.price - a.price); break;
+      case 'area_desc': result.sort((a, b) => b.area - a.area); break;
       default:
         result.sort((a, b) => {
           const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
@@ -157,7 +179,21 @@ export class Listings implements OnInit {
     }
 
     this.filteredProperties = result;
+    this.totalPages = getTotalPages(result.length, this.pageSize);
+    this.currentPage = clampPage(this.currentPage, this.totalPages);
+    this.paginatedProperties = paginateItems(result, this.currentPage, this.pageSize);
     this.countActiveFilters();
+  }
+
+  onPageChange(page: number) {
+    this.currentPage = page;
+    this.paginatedProperties = paginateItems(
+      this.filteredProperties,
+      this.currentPage,
+      this.pageSize
+    );
+    setTimeout(() => AOS.refresh(), 50);
+    document.querySelector('.listings-main')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   countActiveFilters() {
@@ -179,7 +215,7 @@ export class Listings implements OnInit {
     this.selectedBedrooms = '';
     this.priceRange = [this.priceMin, this.priceMax];
     this.sortBy = 'newest';
-    this.applyFilters();
+    this.loadProperties();
   }
 
   toggleFilters() {
@@ -187,16 +223,19 @@ export class Listings implements OnInit {
   }
 
   onMinChange(value: number) {
-    if (Number(value) >= this.priceRange[1]) {
-      this.priceRange[0] = this.priceRange[1] - this.stepSize;
-    }
+    if (Number(value) >= this.priceRange[1]) this.priceRange[0] = this.priceRange[1] - this.stepSize;
+    this.currentPage = 1;
     this.applyFilters();
   }
 
   onMaxChange(value: number) {
-    if (Number(value) <= this.priceRange[0]) {
-      this.priceRange[1] = this.priceRange[0] + this.stepSize;
-    }
+    if (Number(value) <= this.priceRange[0]) this.priceRange[1] = this.priceRange[0] + this.stepSize;
+    this.currentPage = 1;
+    this.applyFilters();
+  }
+
+  onClientFilterChange() {
+    this.currentPage = 1;
     this.applyFilters();
   }
 

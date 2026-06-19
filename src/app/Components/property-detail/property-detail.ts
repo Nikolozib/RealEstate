@@ -1,12 +1,19 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { take } from 'rxjs/operators';
 import { PropertyService } from '../../core/services/property';
 import { InquiryService } from '../../core/services/inquiry';
 import { AuthService } from '../../core/services/auth';
 import { UserService } from '../../core/services/user';
 import { SeoService } from '../../core/services/seo';
 import { Property } from '../../core/services/models/property.model';
+import {
+  isValidEmail,
+  isValidMessage,
+  isValidName,
+  isValidPhone,
+} from '../../core/utils/validation';
 import * as AOS from 'aos';
 
 @Component({
@@ -14,23 +21,20 @@ import * as AOS from 'aos';
   standalone: true,
   imports: [RouterLink, FormsModule],
   templateUrl: './property-detail.html',
-  styleUrl: './property-detail.scss',
+  styleUrl: './property-detail.scss'
 })
 export class PropertyDetail implements OnInit {
   property: Property | null = null;
   loading = true;
   notFound = false;
 
-  // Gallery
   activeImage = '';
   lightboxOpen = false;
 
-  // Auth
   isLoggedIn = false;
   currentUserId = '';
   isSaved = false;
 
-  // Inquiry form
   inquiryName = '';
   inquiryEmail = '';
   inquiryPhone = '';
@@ -46,36 +50,49 @@ export class PropertyDetail implements OnInit {
     private authService: AuthService,
     private userService: UserService,
     private seo: SeoService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     AOS.init({ duration: 700, easing: 'ease-in-out', once: true, offset: 40 });
 
-    this.authService.isLoggedIn$.subscribe((loggedIn) => {
-      this.isLoggedIn = loggedIn;
+    this.authService.currentUser$.subscribe(u => {
+      this.isLoggedIn = !!u;
+      this.currentUserId = u?.uid ?? '';
+
+      if (u) {
+        this.userService.getUserById(u.uid).pipe(take(1)).subscribe(userData => {
+          this.isSaved = userData?.savedProperties?.includes(this.property?.id ?? '') ?? false;
+        });
+      }
     });
 
     const id = this.route.snapshot.paramMap.get('id');
-    if (!id) {
-      this.notFound = true;
-      this.loading = false;
-      return;
-    }
+    if (!id) { this.notFound = true; this.loading = false; return; }
 
-    this.propertyService.getPropertyById(id).subscribe((prop) => {
-      if (!prop) {
+    this.propertyService.getPropertyById(id).subscribe({
+      next: (prop) => {
+        if (!prop) {
+          this.notFound = true;
+          this.loading = false;
+          this.cdr.detectChanges();
+          return;
+        }
+        this.property = prop;
+        this.activeImage = prop.thumbnailUrl;
+        this.loading = false;
+        this.propertyService.incrementViews(id);
+        this.seo.setPageMeta(
+          `${prop.title} | RealEstate Georgia`,
+          `${prop.propertyType} in ${prop.district}, ${prop.city}. ${prop.bedrooms} beds, ${prop.area}m².`
+        );
+        this.cdr.detectChanges();
+      },
+      error: () => {
         this.notFound = true;
         this.loading = false;
-        return;
+        this.cdr.detectChanges();
       }
-      this.property = prop;
-      this.activeImage = prop.thumbnailUrl;
-      this.loading = false;
-      this.propertyService.incrementViews(id);
-      this.seo.setPageMeta(
-        `${prop.title} | RealEstate Georgia`,
-        `${prop.propertyType} in ${prop.district}, ${prop.city}. ${prop.bedrooms} beds, ${prop.area}m². ${prop.priceType === 'rent' ? 'For rent' : 'For sale'} at $${prop.price.toLocaleString()}.`,
-      );
     });
   }
 
@@ -96,9 +113,7 @@ export class PropertyDetail implements OnInit {
 
   getAllImages(): string[] {
     if (!this.property) return [];
-    const imgs = [this.property.thumbnailUrl, ...this.property.images].filter(
-      (i) => i && i.trim() !== '',
-    );
+    const imgs = [this.property.thumbnailUrl, ...this.property.images].filter(i => i && i.trim() !== '');
     return [...new Set(imgs)];
   }
 
@@ -120,6 +135,26 @@ export class PropertyDetail implements OnInit {
       return;
     }
 
+    if (!isValidName(this.inquiryName)) {
+      this.inquiryError = 'Please enter a valid name (letters only, at least 2 characters).';
+      return;
+    }
+
+    if (!isValidEmail(this.inquiryEmail)) {
+      this.inquiryError = 'Please enter a valid email address.';
+      return;
+    }
+
+    if (this.inquiryPhone.trim() && !isValidPhone(this.inquiryPhone)) {
+      this.inquiryError = 'Please enter a valid phone number (digits only, 7–15 digits).';
+      return;
+    }
+
+    if (!isValidMessage(this.inquiryMessage)) {
+      this.inquiryError = 'Message must be at least 10 characters.';
+      return;
+    }
+
     this.inquirySending = true;
     this.inquiryError = '';
 
@@ -132,7 +167,7 @@ export class PropertyDetail implements OnInit {
         senderPhone: this.inquiryPhone,
         message: this.inquiryMessage,
         userId: this.currentUserId || null,
-        agentId: this.property.agentId ?? '',
+        agentId: this.property.agentId ?? ''
       });
       this.inquirySent = true;
       this.inquiryName = '';
@@ -154,36 +189,15 @@ export class PropertyDetail implements OnInit {
   getDetails(): { icon: string; label: string; value: string }[] {
     if (!this.property) return [];
     const p = this.property;
-    const details = [
+    return [
       { icon: 'fa-solid fa-vector-square', label: 'Area', value: `${p.area} m²` },
-      {
-        icon: 'fa-solid fa-bed',
-        label: 'Bedrooms',
-        value: p.bedrooms > 0 ? `${p.bedrooms}` : 'N/A',
-      },
-      {
-        icon: 'fa-solid fa-bath',
-        label: 'Bathrooms',
-        value: p.bathrooms > 0 ? `${p.bathrooms}` : 'N/A',
-      },
-      {
-        icon: 'fa-solid fa-layer-group',
-        label: 'Floor',
-        value: p.floor > 0 ? `${p.floor} / ${p.totalFloors}` : 'N/A',
-      },
-      {
-        icon: 'fa-solid fa-calendar',
-        label: 'Year Built',
-        value: p.yearBuilt > 0 ? `${p.yearBuilt}` : 'N/A',
-      },
-      {
-        icon: 'fa-solid fa-car',
-        label: 'Parking',
-        value: p.parkingSpots > 0 ? `${p.parkingSpots} spot(s)` : 'None',
-      },
+      { icon: 'fa-solid fa-bed', label: 'Bedrooms', value: p.bedrooms > 0 ? `${p.bedrooms}` : 'N/A' },
+      { icon: 'fa-solid fa-bath', label: 'Bathrooms', value: p.bathrooms > 0 ? `${p.bathrooms}` : 'N/A' },
+      { icon: 'fa-solid fa-layer-group', label: 'Floor', value: p.floor > 0 ? `${p.floor} / ${p.totalFloors}` : 'N/A' },
+      { icon: 'fa-solid fa-calendar', label: 'Year Built', value: p.yearBuilt > 0 ? `${p.yearBuilt}` : 'N/A' },
+      { icon: 'fa-solid fa-car', label: 'Parking', value: p.parkingSpots > 0 ? `${p.parkingSpots} spot(s)` : 'None' },
       { icon: 'fa-solid fa-tag', label: 'Type', value: p.propertyType },
-      { icon: 'fa-solid fa-circle-check', label: 'Status', value: p.status },
+      { icon: 'fa-solid fa-circle-check', label: 'Status', value: p.status }
     ];
-    return details;
   }
 }
