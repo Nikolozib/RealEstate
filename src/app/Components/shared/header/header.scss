@@ -11,14 +11,24 @@ $transition: all 0.3s ease;
   left: 0;
   width: 100%;
   z-index: 1000;
-  padding: 20px 0;
-  background: transparent;
-  transition: $transition;
+  padding: 14px 0;
+  background: $primary;
+  box-shadow: 0 2px 24px rgba(0, 0, 0, 0.15);
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition: transform 0.35s ease, opacity 0.35s ease, visibility 0.35s ease;
+
+  &.visible {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+  }
 
   &.scrolled {
-    background: $primary;
     padding: 14px 0;
-    box-shadow: 0 2px 24px rgba(0, 0, 0, 0.15);
   }
 
   &__container {
@@ -182,9 +192,6 @@ $transition: all 0.3s ease;
 
 @media (max-width: 900px) {
   .header {
-    background: $primary;
-    padding: 14px 0;
-
     &__nav {
       display: none;
       position: fixed;

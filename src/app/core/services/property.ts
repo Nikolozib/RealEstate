@@ -25,7 +25,7 @@ import { Property } from './models/property.model';
 export class PropertyService {
   private firestore = inject(Firestore);
   private readonly collectionName = 'properties';
-  private readonly PAGE_SIZE = 12;
+  private readonly PAGE_SIZE = 9;
 
   private lastVisible: QueryDocumentSnapshot | null = null;
   private hasMorePages = true;
@@ -115,13 +115,14 @@ export class PropertyService {
   }
 
   // ── Featured (home page) ─────────────────────────────────────────────────
-  getFeaturedProperties(): Observable<Property[]> {
+  getFeaturedProperties(count?: number): Observable<Property[]> {
     const ref = collection(this.firestore, this.collectionName);
-    const q = query(
-      ref,
+    const constraints: any[] = [
       where('isFeatured', '==', true),
-      orderBy('createdAt', 'desc')
-    );
+      orderBy('createdAt', 'desc'),
+    ];
+    if (count) constraints.push(limit(count));
+    const q = query(ref, ...constraints);
     return from(getDocs(q)).pipe(
       map(snap => snap.docs.map(d => ({ id: d.id, ...d.data() } as Property)))
     );

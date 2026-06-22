@@ -5,29 +5,21 @@ import { firstValueFrom } from 'rxjs';
 import { PropertyService } from '../../core/services/property';
 import { Property } from '../../core/services/models/property.model';
 import { SeoService } from '../../core/services/seo';
-import { Pagination } from '../shared/pagination/pagination';
-import {
-  PAGE_SIZE,
-  paginateItems,
-  getTotalPages,
-  clampPage,
-} from '../../core/utils/pagination';
 import * as AOS from 'aos';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterLink, CommonModule, Pagination],
+  imports: [RouterLink, CommonModule],
   templateUrl: './home.html',
   styleUrl: './home.scss'
 })
 export class Home implements OnInit, OnDestroy {
+  /** How many properties to preview on the home page */
+  readonly featuredPreviewCount = 3;
+
   featuredProperties: Property[] = [];
-  paginatedFeatured: Property[] = [];
   loading = true;
-  currentPage = 1;
-  totalPages = 1;
-  readonly pageSize = PAGE_SIZE;
 
   currentSlide = 0;
   private slideInterval: any;
@@ -100,51 +92,28 @@ export class Home implements OnInit, OnDestroy {
 
   private async loadFeaturedProperties() {
     this.loading = true;
+    const count = this.featuredPreviewCount;
 
     try {
-      let props = await firstValueFrom(this.propertyService.getFeaturedProperties());
+      let props = await firstValueFrom(this.propertyService.getFeaturedProperties(count));
       if (!props.length) {
-        props = await firstValueFrom(this.propertyService.getLatestProperties(100));
+        props = await firstValueFrom(this.propertyService.getLatestProperties(count));
       }
       this.featuredProperties = props;
-      this.updatePagination();
       setTimeout(() => AOS.refresh(), 50);
     } catch (err) {
       console.error('Failed to load featured properties:', err);
       try {
         this.featuredProperties = await firstValueFrom(
-          this.propertyService.getLatestProperties(100)
+          this.propertyService.getLatestProperties(count)
         );
-        this.updatePagination();
       } catch {
         this.featuredProperties = [];
-        this.updatePagination();
       }
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
     }
-  }
-
-  private updatePagination() {
-    this.totalPages = getTotalPages(this.featuredProperties.length, this.pageSize);
-    this.currentPage = clampPage(this.currentPage, this.totalPages);
-    this.paginatedFeatured = paginateItems(
-      this.featuredProperties,
-      this.currentPage,
-      this.pageSize
-    );
-  }
-
-  onPageChange(page: number) {
-    this.currentPage = page;
-    this.paginatedFeatured = paginateItems(
-      this.featuredProperties,
-      this.currentPage,
-      this.pageSize
-    );
-    setTimeout(() => AOS.refresh(), 50);
-    document.querySelector('.featured')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   ngOnDestroy() {

@@ -1,4 +1,4 @@
-export const PAGE_SIZE = 12;
+export const PAGE_SIZE = 9;
 
 export function paginateItems<T>(items: T[], page: number, pageSize = PAGE_SIZE): T[] {
   const start = (page - 1) * pageSize;

@@ -13,9 +13,12 @@ import { Router } from '@angular/router';
 })
 export class Header implements OnInit {
   isScrolled = false;
+  isVisible = false;
   isMenuOpen = false;
   isLoggedIn = false;
   isAdmin = false;
+
+  private readonly scrollThreshold = 50;
 
   constructor(
     private authService: AuthService,
@@ -24,6 +27,8 @@ export class Header implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.updateScrollState();
+
     this.authService.isLoggedIn$.subscribe(status => {
       this.isLoggedIn = status;
 
@@ -42,15 +47,23 @@ export class Header implements OnInit {
 
   @HostListener('window:scroll')
   onScroll() {
-    this.isScrolled = window.scrollY > 50;
+    this.updateScrollState();
+  }
+
+  private updateScrollState() {
+    const scrolled = window.scrollY > this.scrollThreshold;
+    this.isScrolled = scrolled;
+    this.isVisible = scrolled || this.isMenuOpen;
   }
 
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;
+    this.updateScrollState();
   }
 
   closeMenu() {
     this.isMenuOpen = false;
+    this.updateScrollState();
   }
 
   logout() {

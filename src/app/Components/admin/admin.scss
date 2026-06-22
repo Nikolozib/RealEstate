@@ -455,6 +455,108 @@ $sidebar-width: 260px;
   }
 }
 
+// ─── PROPERTY LIST (single column) ───────────────────────
+.admin-property-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-property-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: $bg-card;
+  border: 1px solid $border;
+  border-radius: 12px;
+  transition: $transition;
+
+  &:hover {
+    border-color: rgba(26, 74, 58, 0.2);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  }
+
+  &__thumb {
+    width: 96px;
+    height: 72px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid $border;
+    flex-shrink: 0;
+  }
+
+  &__body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 6px;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: $text;
+  }
+
+  &__price {
+    font-size: 15px;
+    font-weight: 600;
+    color: $secondary;
+    white-space: nowrap;
+  }
+
+  &__location {
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: $text-secondary;
+
+    i {
+      margin-right: 4px;
+      color: $secondary;
+    }
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__featured {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: $secondary;
+
+    i { font-size: 11px; }
+  }
+
+  &__views {
+    font-size: 12px;
+    color: $text-secondary;
+
+    i { margin-right: 4px; }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+}
+
 // ─── TABLE ────────────────────────────────────────────────
 .admin-table-wrap {
   background: $bg-card;
@@ -656,6 +758,27 @@ $sidebar-width: 260px;
 }
 
 @media (max-width: 768px) {
+  .admin-property-item {
+    flex-direction: column;
+    align-items: stretch;
+
+    &__thumb {
+      width: 100%;
+      height: 160px;
+    }
+
+    &__top {
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    &__actions {
+      justify-content: flex-end;
+      padding-top: 8px;
+      border-top: 1px solid $border;
+    }
+  }
+
   .admin-table {
     display: block;
     overflow-x: auto;

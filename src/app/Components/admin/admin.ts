@@ -33,12 +33,9 @@ export class Admin implements OnInit {
   isAdmin = false;
 
   properties: Property[] = [];
-  paginatedProperties: Property[] = [];
   inquiries: Inquiry[] = [];
   paginatedInquiries: Inquiry[] = [];
-  propertiesPage = 1;
   inquiriesPage = 1;
-  propertiesTotalPages = 1;
   inquiriesTotalPages = 1;
   readonly pageSize = PAGE_SIZE;
 
@@ -100,7 +97,6 @@ export class Admin implements OnInit {
       this.inquiries = await firstValueFrom(
         this.inquiryService.getInquiriesByAgent('').pipe(take(1))
       );
-      this.updatePropertiesPagination();
       this.updateInquiriesPagination();
       setTimeout(() => AOS.refresh(), 50);
     } catch (e) {
@@ -118,31 +114,12 @@ export class Admin implements OnInit {
     this.formSuccess = '';
   }
 
-  private updatePropertiesPagination() {
-    this.propertiesTotalPages = getTotalPages(this.properties.length, this.pageSize);
-    this.propertiesPage = clampPage(this.propertiesPage, this.propertiesTotalPages);
-    this.paginatedProperties = paginateItems(
-      this.properties,
-      this.propertiesPage,
-      this.pageSize
-    );
-  }
-
   private updateInquiriesPagination() {
     this.inquiriesTotalPages = getTotalPages(this.inquiries.length, this.pageSize);
     this.inquiriesPage = clampPage(this.inquiriesPage, this.inquiriesTotalPages);
     this.paginatedInquiries = paginateItems(
       this.inquiries,
       this.inquiriesPage,
-      this.pageSize
-    );
-  }
-
-  onPropertiesPageChange(page: number) {
-    this.propertiesPage = page;
-    this.paginatedProperties = paginateItems(
-      this.properties,
-      this.propertiesPage,
       this.pageSize
     );
   }
@@ -306,7 +283,6 @@ export class Admin implements OnInit {
       this.deleteConfirmId = null;
       // Remove locally for instant feedback, then reload to sync
       this.properties = this.properties.filter(p => p.id !== id);
-      this.updatePropertiesPagination();
       this.formSuccess = 'Property deleted.';
       setTimeout(() => (this.formSuccess = ''), 3000);
     } catch (e) {

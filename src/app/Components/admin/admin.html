@@ -220,74 +220,66 @@
           </div>
         }
 
-        <!-- PROPERTIES TABLE -->
-        <div class="admin-table-wrap" data-aos="fade-up">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Property</th>
-                <th>Type</th>
-                <th>Price</th>
-                <th>Status</th>
-                <th>Featured</th>
-                <th>Views</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (property of paginatedProperties; track property.id) {
-                <tr>
-                  <td>
-                    <div class="admin-table__property">
-                      <img [src]="property.thumbnailUrl" [alt]="property.title" class="admin-table__thumb" />
-                      <div>
-                        <span class="admin-table__name">{{ property.title }}</span>
-                        <span class="admin-table__location">{{ property.district }}, {{ property.city }}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <span class="admin-table__badge">{{ property.propertyType }}</span>
-                  </td>
-                  <td class="admin-table__price">{{ formatPrice(property.price, property.priceType) }}</td>
-                  <td>
-                    <span class="admin-table__status" [class]="getStatusColor(property.status)">
-                      <i class="fa-solid fa-circle"></i> {{ property.status }}
+        <!-- PROPERTIES LIST (single column, all items) -->
+        <div class="admin-property-list" data-aos="fade-up">
+          @for (property of properties; track property.id) {
+            <div class="admin-property-item">
+              <img
+                [src]="property.thumbnailUrl"
+                [alt]="property.title"
+                class="admin-property-item__thumb"
+              />
+              <div class="admin-property-item__body">
+                <div class="admin-property-item__top">
+                  <h3 class="admin-property-item__title">{{ property.title }}</h3>
+                  <span class="admin-property-item__price">
+                    {{ formatPrice(property.price, property.priceType) }}
+                  </span>
+                </div>
+                <p class="admin-property-item__location">
+                  <i class="fa-solid fa-location-dot"></i>
+                  {{ property.district }}, {{ property.city }}
+                </p>
+                <div class="admin-property-item__meta">
+                  <span class="admin-table__badge">{{ property.propertyType }}</span>
+                  <span class="admin-table__status" [class]="getStatusColor(property.status)">
+                    <i class="fa-solid fa-circle"></i> {{ property.status }}
+                  </span>
+                  @if (property.isFeatured) {
+                    <span class="admin-property-item__featured">
+                      <i class="fa-solid fa-star"></i> Featured
                     </span>
-                  </td>
-                  <td>
-                    @if (property.isFeatured) {
-                      <i class="fa-solid fa-star admin-table__star"></i>
-                    } @else {
-                      <span class="admin-table__no">—</span>
-                    }
-                  </td>
-                  <td>{{ property.views }}</td>
-                  <td>
-                    <div class="admin-table__actions">
-                      <a [routerLink]="['/listings', property.id]" target="_blank" class="admin-table__btn view" title="View">
-                        <i class="fa-solid fa-eye"></i>
-                      </a>
-                      <button class="admin-table__btn edit" (click)="openEditForm(property)" title="Edit">
-                        <i class="fa-solid fa-pen"></i>
-                      </button>
-                      @if (deleteConfirmId === property.id) {
-                        <div class="admin-table__confirm">
-                          <span>Delete?</span>
-                          <button class="admin-table__btn danger" (click)="deleteProperty(property.id!)">Yes</button>
-                          <button class="admin-table__btn cancel" (click)="cancelDelete()">No</button>
-                        </div>
-                      } @else {
-                        <button class="admin-table__btn delete" (click)="confirmDelete(property.id!)" title="Delete">
-                          <i class="fa-solid fa-trash"></i>
-                        </button>
-                      }
-                    </div>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
+                  }
+                  <span class="admin-property-item__views">
+                    <i class="fa-solid fa-eye"></i> {{ property.views }} views
+                  </span>
+                </div>
+              </div>
+              <div class="admin-property-item__actions">
+                <a
+                  [routerLink]="['/listings', property.id]"
+                  target="_blank"
+                  class="admin-table__btn view"
+                  title="View">
+                  <i class="fa-solid fa-eye"></i>
+                </a>
+                <button class="admin-table__btn edit" (click)="openEditForm(property)" title="Edit">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+                @if (deleteConfirmId === property.id) {
+                  <div class="admin-table__confirm">
+                    <span>Delete?</span>
+                    <button class="admin-table__btn danger" (click)="deleteProperty(property.id!)">Yes</button>
+                    <button class="admin-table__btn cancel" (click)="cancelDelete()">No</button>
+                  </div>
+                } @else {
+                  <button class="admin-table__btn delete" (click)="confirmDelete(property.id!)" title="Delete">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                }
+              </div>
+            </div>
+          }
 
           @if (properties.length === 0) {
             <div class="admin-table__empty">
@@ -296,15 +288,6 @@
             </div>
           }
         </div>
-
-        @if (propertiesTotalPages > 1) {
-          <app-pagination
-            [currentPage]="propertiesPage"
-            [totalPages]="propertiesTotalPages"
-            [totalItems]="properties.length"
-            (pageChange)="onPropertiesPageChange($event)"
-          />
-        }
 
       </div>
     }

@@ -77,7 +77,7 @@
 
     @if (!loading && featuredProperties.length > 0) {
       <div class="featured__grid">
-        @for (property of paginatedFeatured; track property.id) {
+        @for (property of featuredProperties; track property.id) {
           <a [routerLink]="['/listings', property.id]" class="property-card" data-aos="fade-up">
             <div class="property-card__img-wrap">
               <img
@@ -116,15 +116,6 @@
 
     @if (!loading && featuredProperties.length === 0) {
       <p class="featured__empty">No featured properties at the moment. Check back soon.</p>
-    }
-
-    @if (!loading && totalPages > 1) {
-      <app-pagination
-        [currentPage]="currentPage"
-        [totalPages]="totalPages"
-        [totalItems]="featuredProperties.length"
-        (pageChange)="onPageChange($event)"
-      />
     }
 
     <div class="featured__cta" data-aos="fade-up">
