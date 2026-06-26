@@ -128,7 +128,7 @@ export class PropertyService {
     );
   }
 
-  getLatestProperties(count = 6): Observable<Property[]> {
+  getLatestProperties(count = 3): Observable<Property[]> {
     const ref = collection(this.firestore, this.collectionName);
     const q = query(ref, orderBy('createdAt', 'desc'), limit(count));
     return from(getDocs(q)).pipe(

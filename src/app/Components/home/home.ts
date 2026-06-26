@@ -99,14 +99,14 @@ export class Home implements OnInit, OnDestroy {
       if (!props.length) {
         props = await firstValueFrom(this.propertyService.getLatestProperties(count));
       }
-      this.featuredProperties = props;
+      this.featuredProperties = props.slice(0, count);
       setTimeout(() => AOS.refresh(), 50);
     } catch (err) {
       console.error('Failed to load featured properties:', err);
       try {
-        this.featuredProperties = await firstValueFrom(
-          this.propertyService.getLatestProperties(count)
-        );
+        this.featuredProperties = (
+          await firstValueFrom(this.propertyService.getLatestProperties(count))
+        ).slice(0, count);
       } catch {
         this.featuredProperties = [];
       }
