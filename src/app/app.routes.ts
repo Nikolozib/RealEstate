@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth-guard';
+import { adminGuard } from './core/guards/admin-guard';
 import { About } from './Components/about/about';
 import { Contact } from './Components/contact/contact';
 import { Favorites } from './Components/favorites/favorites';
@@ -11,16 +12,15 @@ import { Profile } from './Components/profile/profile';
 import { PropertyDetail } from './Components/property-detail/property-detail';
 import { Register } from './Components/Auth/register/register';
 import { Admin } from './Components/admin/admin';
-import { adminGuard } from './core/guards/admin-guard';
 
 export const routes: Routes = [
+  // Public — no login required
   { path: '', component: Home },
   { path: 'about', component: About },
   { path: 'contact', component: Contact },
-  { path: 'favorites', component: Favorites, canActivate: [authGuard] },
   { path: 'listings', component: Listings },
   { path: 'listings/:id', component: PropertyDetail },
-  { path: 'admin', component: Admin, canActivate: [adminGuard] },
+
   {
     path: 'auth',
     children: [
@@ -29,6 +29,12 @@ export const routes: Routes = [
       { path: '', redirectTo: 'login', pathMatch: 'full' },
     ],
   },
+
+  { path: 'favorites', component: Favorites, canActivate: [authGuard] },
   { path: 'profile', component: Profile, canActivate: [authGuard] },
+
+  // Admin only
+  { path: 'admin', component: Admin, canActivate: [adminGuard] },
+
   { path: '**', component: NotFound },
 ];

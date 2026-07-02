@@ -38,7 +38,16 @@ export class Login {
     this.error = '';
 
     try {
-      await this.authService.login(this.email, this.password);
+      const cred = await this.authService.login(this.email, this.password);
+
+      // Block unverified users — sign them out and show a clear message
+      if (!cred.user.emailVerified) {
+        await this.authService.logout();
+        this.error =
+          'Please verify your email before signing in. Check your inbox for the verification link.';
+        return;
+      }
+
       this.router.navigate(['/']);
     } catch (e: any) {
       this.error = this.getErrorMessage(e.code);

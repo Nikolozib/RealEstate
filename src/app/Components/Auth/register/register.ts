@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth';
@@ -17,7 +17,7 @@ import {
   templateUrl: './register.html',
   styleUrl: './register.scss',
 })
-export class Register {
+export class Register implements OnDestroy {
   displayName = '';
   email = '';
   password = '';
@@ -27,6 +27,14 @@ export class Register {
   error = '';
   showPassword = false;
   showConfirm = false;
+
+  registrationComplete = false;
+  registeredEmail = '';
+  profileWarning = '';
+  resendLoading = false;
+  resendSuccess = false;
+
+  private pollInterval: any = null;
 
   constructor(
     private authService: AuthService,
@@ -39,27 +47,22 @@ export class Register {
       this.error = 'Please fill in all required fields.';
       return;
     }
-
     if (!isValidName(this.displayName)) {
       this.error = 'Please enter a valid name (letters only, at least 2 characters).';
       return;
     }
-
     if (!isValidEmail(this.email)) {
       this.error = 'Please enter a valid email address.';
       return;
     }
-
     if (this.phone.trim() && !isValidPhone(this.phone)) {
       this.error = 'Please enter a valid phone number (digits only, 7–15 digits).';
       return;
     }
-
     if (!isValidPassword(this.password)) {
       this.error = 'Password must be at least 6 characters.';
       return;
     }
-
     if (this.password !== this.confirmPassword) {
       this.error = 'Passwords do not match.';
       return;
@@ -70,6 +73,7 @@ export class Register {
 
     try {
       const cred = await this.authService.register(this.email, this.password);
+
       try {
         await this.userService.createUser(cred.user.uid, {
           displayName: this.displayName,
@@ -79,10 +83,20 @@ export class Register {
         });
       } catch (firestoreError) {
         console.warn('Firestore user creation failed:', firestoreError);
+        this.profileWarning =
+          'Profile details could not be saved. You can complete them from Settings.';
       }
-      // await cred.user.sendEmailVerification();
-      this.router.navigate(['/']);
-      
+
+      await this.authService.sendVerificationEmail(cred.user);
+
+      this.registeredEmail = this.email;
+      this.registrationComplete = true;
+
+      // Poll Firebase every 3 seconds — when the user clicks the link
+      // in their email, emailVerified flips to true and we redirect automatically.
+      // No button means nothing to bypass.
+      this.startPolling();
+
     } catch (e: any) {
       this.error = this.getErrorMessage(e.code);
     } finally {
@@ -90,16 +104,57 @@ export class Register {
     }
   }
 
+  private startPolling() {
+    this.pollInterval = setInterval(async () => {
+      try {
+        await this.authService.reloadCurrentUser();
+        const user = this.authService.getCurrentUser();
+        if (user?.emailVerified) {
+          this.stopPolling();
+          this.router.navigate(['/']);
+        }
+      } catch (e) {
+        console.warn('Verification poll error:', e);
+      }
+    }, 3000);
+  }
+
+  private stopPolling() {
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval);
+      this.pollInterval = null;
+    }
+  }
+
+  // Stop polling if the user navigates away
+  ngOnDestroy() {
+    this.stopPolling();
+  }
+
+  async resendVerification() {
+    const user = this.authService.getCurrentUser();
+    if (!user) return;
+
+    this.resendLoading = true;
+    this.resendSuccess = false;
+
+    try {
+      await this.authService.sendVerificationEmail(user);
+      this.resendSuccess = true;
+      setTimeout(() => (this.resendSuccess = false), 4000);
+    } catch (e) {
+      console.warn('Resend failed:', e);
+    } finally {
+      this.resendLoading = false;
+    }
+  }
+
   getErrorMessage(code: string): string {
     switch (code) {
-      case 'auth/email-already-in-use':
-        return 'An account with this email already exists.';
-      case 'auth/invalid-email':
-        return 'Please enter a valid email address.';
-      case 'auth/weak-password':
-        return 'Password should be at least 6 characters.';
-      default:
-        return 'Something went wrong. Please try again.';
+      case 'auth/email-already-in-use': return 'An account with this email already exists.';
+      case 'auth/invalid-email':        return 'Please enter a valid email address.';
+      case 'auth/weak-password':        return 'Password should be at least 6 characters.';
+      default:                          return 'Something went wrong. Please try again.';
     }
   }
 
@@ -117,10 +172,6 @@ export class Register {
     return { label: 'Strong', level: 3 };
   }
 
-  togglePassword() {
-    this.showPassword = !this.showPassword;
-  }
-  toggleConfirm() {
-    this.showConfirm = !this.showConfirm;
-  }
+  togglePassword() { this.showPassword = !this.showPassword; }
+  toggleConfirm()  { this.showConfirm  = !this.showConfirm;  }
 }

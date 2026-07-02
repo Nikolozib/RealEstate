@@ -15,7 +15,6 @@ import * as AOS from 'aos';
   styleUrl: './home.scss'
 })
 export class Home implements OnInit, OnDestroy {
-  /** How many properties to preview on the home page */
   readonly featuredPreviewCount = 3;
 
   featuredProperties: Property[] = [];

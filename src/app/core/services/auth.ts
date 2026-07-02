@@ -4,7 +4,9 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
-  user
+  sendEmailVerification,
+  user,
+  User as FirebaseUser,
 } from '@angular/fire/auth';
 import { map, shareReplay } from 'rxjs/operators';
 
@@ -12,9 +14,6 @@ import { map, shareReplay } from 'rxjs/operators';
 export class AuthService {
   private auth = inject(Auth);
 
-  // user() from AngularFire waits for Firebase to resolve auth state before emitting.
-  // BehaviorSubject(null) emitted null immediately — causing take(1) to capture null
-  // and redirect to login before Firebase had a chance to confirm the user was logged in.
   readonly currentUser$ = user(this.auth).pipe(shareReplay(1));
   readonly isLoggedIn$ = this.currentUser$.pipe(map(u => !!u));
 
@@ -30,7 +29,18 @@ export class AuthService {
     return signOut(this.auth);
   }
 
-  getCurrentUser() {
+  getCurrentUser(): FirebaseUser | null {
     return this.auth.currentUser;
+  }
+
+  // Fetches a fresh token from Firebase so emailVerified is up-to-date.
+  // Must be called before reading currentUser.emailVerified.
+  reloadCurrentUser(): Promise<void> {
+    const u = this.auth.currentUser;
+    return u ? u.reload() : Promise.resolve();
+  }
+
+  sendVerificationEmail(firebaseUser: FirebaseUser): Promise<void> {
+    return sendEmailVerification(firebaseUser);
   }
 }

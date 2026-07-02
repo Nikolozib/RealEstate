@@ -43,7 +43,6 @@ export class Profile implements OnInit {
     );
     AOS.init({ duration: 700, easing: 'ease-in-out', once: true, offset: 40 });
 
-    // take(1): resolve once — avoids nested subscriptions re-running on every auth event
     this.authService.currentUser$.pipe(take(1)).subscribe(async currentUser => {
       if (!currentUser) {
         this.router.navigate(['/auth/login']);
@@ -56,7 +55,6 @@ export class Profile implements OnInit {
   private async loadUser(uid: string) {
     this.loading = true;
     try {
-      // firstValueFrom replaces the inner .subscribe — no nested subscription leak
       const userData = await firstValueFrom(this.userService.getUserById(uid));
       if (!userData) return;
 

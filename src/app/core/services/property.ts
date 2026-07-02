@@ -39,7 +39,6 @@ export class PropertyService {
     this.hasMorePages = true;
   }
 
-  // ── Paginated fetch (used by Listings page) ──────────────────────────────
   async getPropertiesPage(filters: {
     priceType?: string;
     propertyType?: string;
@@ -85,7 +84,6 @@ export class PropertyService {
     return all;
   }
 
-  // ── Full fetch for Admin panel (no pagination) ───────────────────────────
   getAllPropertiesForAdmin(): Promise<Property[]> {
     const ref = collection(this.firestore, this.collectionName);
     const q = query(ref, orderBy('createdAt', 'desc'));
@@ -94,8 +92,6 @@ export class PropertyService {
     );
   }
 
-  // ── Batch fetch by IDs (used by Favorites page) ──────────────────────────
-  // Firestore 'in' supports max 30 items — chunks automatically
   async getPropertiesByIds(ids: string[]): Promise<Property[]> {
     if (!ids.length) return [];
 
@@ -114,7 +110,6 @@ export class PropertyService {
     return results;
   }
 
-  // ── Featured (home page) ─────────────────────────────────────────────────
   getFeaturedProperties(count?: number): Observable<Property[]> {
     const ref = collection(this.firestore, this.collectionName);
     const constraints: any[] = [
@@ -136,7 +131,6 @@ export class PropertyService {
     );
   }
 
-  // ── Single doc ───────────────────────────────────────────────────────────
   getPropertyById(id: string): Observable<Property | null> {
     const ref = doc(this.firestore, this.collectionName, id);
     return from(getDoc(ref)).pipe(
@@ -146,7 +140,6 @@ export class PropertyService {
     );
   }
 
-  // ── Mutations ────────────────────────────────────────────────────────────
   addProperty(property: any): Promise<any> {
     const ref = collection(this.firestore, this.collectionName);
     return addDoc(ref, property);

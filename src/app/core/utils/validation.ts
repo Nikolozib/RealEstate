@@ -6,7 +6,6 @@ export function isValidEmail(value: string): boolean {
   return EMAIL_REGEX.test(value.trim());
 }
 
-/** Phone must contain only digits and common separators; 7–15 digits when provided. */
 export function isValidPhone(value: string, required = false): boolean {
   const trimmed = value.trim();
   if (!trimmed) return !required;

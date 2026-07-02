@@ -29,7 +29,6 @@ export class InquiryService {
     });
   }
 
-  // getDocs instead of collectionData — one-shot fetch, no persistent listener
   getInquiriesByProperty(propertyId: string): Observable<Inquiry[]> {
     const ref = collection(this.firestore, this.collectionName);
     const q = query(ref, where('propertyId', '==', propertyId), orderBy('createdAt', 'desc'));

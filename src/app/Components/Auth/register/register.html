@@ -1,5 +1,6 @@
 <div class="auth-page">
 
+  <!-- ─── Left panel ─────────────────────────────────────────── -->
   <div class="auth-page__left">
     <div class="auth-page__left-overlay"></div>
     <div class="auth-page__left-content">
@@ -31,143 +32,199 @@
     </div>
   </div>
 
+  <!-- ─── Right panel ────────────────────────────────────────── -->
   <div class="auth-page__right">
-    <div class="auth-card">
 
-      <div class="auth-card__header">
-        <h1 class="auth-card__title">Create Account</h1>
-        <p class="auth-card__sub">Join thousands of people finding their perfect home</p>
-      </div>
-
-      <div class="auth-card__body">
-
-        @if (error) {
-          <div class="auth-card__error">
-            <i class="fa-solid fa-triangle-exclamation"></i>
-            {{ error }}
-          </div>
-        }
-
-        <div class="form-group">
-          <label class="form-label">Full Name <span class="form-required">*</span></label>
-          <div class="form-input-wrap">
-            <i class="fa-solid fa-user form-input-icon"></i>
-            <input
-              type="text"
-              class="form-input"
-              placeholder="Your full name"
-              [(ngModel)]="displayName"
-            />
-          </div>
+    <!-- ── STATE 1: Registration form ──────────────────────── -->
+    @if (!registrationComplete) {
+      <div class="auth-card">
+        <div class="auth-card__header">
+          <h1 class="auth-card__title">Create Account</h1>
+          <p class="auth-card__sub">Join thousands of people finding their perfect home</p>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Email Address <span class="form-required">*</span></label>
-          <div class="form-input-wrap">
-            <i class="fa-solid fa-envelope form-input-icon"></i>
-            <input
-              type="email"
-              class="form-input"
-              placeholder="your@email.com"
-              [(ngModel)]="email"
-            />
-          </div>
-        </div>
+        <div class="auth-card__body">
 
-        <div class="form-group">
-          <label class="form-label">Phone Number</label>
-          <div class="form-input-wrap">
-            <i class="fa-solid fa-phone form-input-icon"></i>
-            <input
-              type="tel"
-              class="form-input"
-              placeholder="+995 555 000 000"
-              [(ngModel)]="phone"
-            />
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Password <span class="form-required">*</span></label>
-          <div class="form-input-wrap">
-            <i class="fa-solid fa-lock form-input-icon"></i>
-            <input
-              [type]="showPassword ? 'text' : 'password'"
-              class="form-input"
-              placeholder="Min. 6 characters"
-              [(ngModel)]="password"
-            />
-            <button class="form-input-toggle" (click)="togglePassword()" type="button">
-              <i [class]="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
-            </button>
-          </div>
-          @if (password) {
-            <div class="password-strength">
-              <div class="password-strength__bars">
-                <div class="password-strength__bar" [class.active]="getPasswordStrength().level >= 1" [class.weak]="getPasswordStrength().level === 1"></div>
-                <div class="password-strength__bar" [class.active]="getPasswordStrength().level >= 2" [class.fair]="getPasswordStrength().level === 2"></div>
-                <div class="password-strength__bar" [class.active]="getPasswordStrength().level >= 3" [class.strong]="getPasswordStrength().level === 3"></div>
-              </div>
-              <span class="password-strength__label"
-                [class.weak]="getPasswordStrength().level === 1"
-                [class.fair]="getPasswordStrength().level === 2"
-                [class.strong]="getPasswordStrength().level === 3">
-                {{ getPasswordStrength().label }}
-              </span>
+          @if (error) {
+            <div class="auth-card__error">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              {{ error }}
             </div>
           }
-        </div>
 
-        <div class="form-group">
-          <label class="form-label">Confirm Password <span class="form-required">*</span></label>
-          <div class="form-input-wrap">
-            <i class="fa-solid fa-lock form-input-icon"></i>
-            <input
-              [type]="showConfirm ? 'text' : 'password'"
-              class="form-input"
-              [class.mismatch]="confirmPassword && confirmPassword !== password"
-              placeholder="Repeat your password"
-              [(ngModel)]="confirmPassword"
-            />
-            <button class="form-input-toggle" (click)="toggleConfirm()" type="button">
-              <i [class]="showConfirm ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
-            </button>
+          <div class="form-group">
+            <label class="form-label">Full Name <span class="form-required">*</span></label>
+            <div class="form-input-wrap">
+              <i class="fa-solid fa-user form-input-icon"></i>
+              <input type="text" class="form-input" placeholder="Your full name" [(ngModel)]="displayName" />
+            </div>
           </div>
-          @if (confirmPassword && confirmPassword !== password) {
-            <span class="form-hint error">
-              <i class="fa-solid fa-xmark"></i> Passwords do not match
-            </span>
-          }
-          @if (confirmPassword && confirmPassword === password) {
-            <span class="form-hint success">
-              <i class="fa-solid fa-check"></i> Passwords match
-            </span>
-          }
+
+          <div class="form-group">
+            <label class="form-label">Email Address <span class="form-required">*</span></label>
+            <div class="form-input-wrap">
+              <i class="fa-solid fa-envelope form-input-icon"></i>
+              <input type="email" class="form-input" placeholder="your@email.com" [(ngModel)]="email" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            <div class="form-input-wrap">
+              <i class="fa-solid fa-phone form-input-icon"></i>
+              <input type="tel" class="form-input" placeholder="+995 555 000 000" [(ngModel)]="phone" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Password <span class="form-required">*</span></label>
+            <div class="form-input-wrap">
+              <i class="fa-solid fa-lock form-input-icon"></i>
+              <input
+                [type]="showPassword ? 'text' : 'password'"
+                class="form-input"
+                placeholder="Min. 6 characters"
+                [(ngModel)]="password"
+              />
+              <button class="form-input-toggle" (click)="togglePassword()" type="button">
+                <i [class]="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+              </button>
+            </div>
+            @if (password) {
+              <div class="password-strength">
+                <div class="password-strength__bars">
+                  <div class="password-strength__bar"
+                    [class.active]="getPasswordStrength().level >= 1"
+                    [class.weak]="getPasswordStrength().level === 1"></div>
+                  <div class="password-strength__bar"
+                    [class.active]="getPasswordStrength().level >= 2"
+                    [class.fair]="getPasswordStrength().level === 2"></div>
+                  <div class="password-strength__bar"
+                    [class.active]="getPasswordStrength().level >= 3"
+                    [class.strong]="getPasswordStrength().level === 3"></div>
+                </div>
+                <span class="password-strength__label"
+                  [class.weak]="getPasswordStrength().level === 1"
+                  [class.fair]="getPasswordStrength().level === 2"
+                  [class.strong]="getPasswordStrength().level === 3">
+                  {{ getPasswordStrength().label }}
+                </span>
+              </div>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Confirm Password <span class="form-required">*</span></label>
+            <div class="form-input-wrap">
+              <i class="fa-solid fa-lock form-input-icon"></i>
+              <input
+                [type]="showConfirm ? 'text' : 'password'"
+                class="form-input"
+                [class.mismatch]="confirmPassword && confirmPassword !== password"
+                placeholder="Repeat your password"
+                [(ngModel)]="confirmPassword"
+              />
+              <button class="form-input-toggle" (click)="toggleConfirm()" type="button">
+                <i [class]="showConfirm ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+              </button>
+            </div>
+            @if (confirmPassword && confirmPassword !== password) {
+              <span class="form-hint error">
+                <i class="fa-solid fa-xmark"></i> Passwords do not match
+              </span>
+            }
+            @if (confirmPassword && confirmPassword === password) {
+              <span class="form-hint success">
+                <i class="fa-solid fa-check"></i> Passwords match
+              </span>
+            }
+          </div>
+
+          <button class="btn btn--primary btn--full" (click)="register()" [disabled]="loading">
+            @if (loading) {
+              <i class="fa-solid fa-spinner fa-spin"></i> Creating account...
+            } @else {
+              Create Account <i class="fa-solid fa-arrow-right"></i>
+            }
+          </button>
+
+          <p class="auth-card__terms">
+            By creating an account you agree to our
+            <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+          </p>
+
+          <p class="auth-card__switch">
+            Already have an account?
+            <a routerLink="/auth/login" class="auth-card__switch-link">Sign in</a>
+          </p>
+
+        </div>
+      </div>
+    }
+
+    <!-- ── STATE 2: Waiting for verification ───────────────── -->
+    @if (registrationComplete) {
+      <div class="auth-card">
+        <div class="auth-card__header">
+
+          <div class="auth-card__verify-icon">
+            <i class="fa-regular fa-envelope"></i>
+          </div>
+
+          <h1 class="auth-card__title">Check your inbox</h1>
+          <p class="auth-card__sub">We sent a verification link to</p>
+          <p class="auth-card__verify-email">{{ registeredEmail }}</p>
+
         </div>
 
-        <button
-          class="btn btn--primary btn--full"
-          (click)="register()"
-          [disabled]="loading">
-          @if (loading) {
-            <i class="fa-solid fa-spinner fa-spin"></i> Creating account...
-          } @else {
-            Create Account <i class="fa-solid fa-arrow-right"></i>
+        <div class="auth-card__body">
+
+          <!-- Animated waiting indicator -->
+          <div class="auth-card__waiting">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <span>Waiting for verification…</span>
+          </div>
+
+          <p class="auth-card__verify-info">
+            Click the link in that email. This page will automatically
+            redirect you once your email is confirmed.
+          </p>
+
+          @if (profileWarning) {
+            <div class="auth-card__warning">
+              <i class="fa-solid fa-circle-info"></i>
+              {{ profileWarning }}
+            </div>
           }
-        </button>
 
-        <p class="auth-card__terms">
-          By creating an account you agree to our
-          <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
-        </p>
+          @if (resendSuccess) {
+            <div class="auth-card__success">
+              <i class="fa-solid fa-circle-check"></i>
+              Verification email resent successfully.
+            </div>
+          }
 
-        <p class="auth-card__switch">
-          Already have an account?
-          <a routerLink="/auth/login" class="auth-card__switch-link">Sign in</a>
-        </p>
+          <!-- Resend is the only action available -->
+          <button
+            class="btn btn--ghost btn--full"
+            (click)="resendVerification()"
+            [disabled]="resendLoading"
+          >
+            @if (resendLoading) {
+              <i class="fa-solid fa-spinner fa-spin"></i> Resending...
+            } @else {
+              <i class="fa-solid fa-rotate-right"></i> Resend verification email
+            }
+          </button>
 
+          <p class="auth-card__verify-info" style="margin-top: 0.75rem; font-size: 0.82rem;">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            Don't see it? Check your spam folder.
+          </p>
+
+        </div>
       </div>
-    </div>
-  </div>
+    }
 
+  </div>
 </div>
