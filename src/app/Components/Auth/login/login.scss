@@ -177,6 +177,20 @@ $transition:    all 0.3s ease;
     i { font-size: 14px; flex-shrink: 0; }
   }
 
+  &__success {
+    background: rgba(45,138,78,0.08);
+    border: 1px solid rgba(45,138,78,0.2);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #2d8a4e;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    i { font-size: 14px; flex-shrink: 0; }
+  }
+
   &__switch {
     text-align: center;
     font-size: 14px;
@@ -194,6 +208,14 @@ $transition:    all 0.3s ease;
     &:hover {
       color: $secondary;
       text-decoration: underline;
+    }
+
+    &--btn {
+      background: none;
+      border: none;
+      padding: 0;
+      font: inherit;
+      font-weight: 600;
     }
   }
 
@@ -251,6 +273,10 @@ $transition:    all 0.3s ease;
 }
 
 .form-forgot {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
   font-size: 12px;
   color: $primary;
   text-decoration: none;

@@ -18,6 +18,12 @@ export class Login {
   error = '';
   showPassword = false;
 
+  mode: 'login' | 'forgot' = 'login';
+  resetEmail = '';
+  resetSending = false;
+  resetSent = false;
+  resetError = '';
+
   constructor(
     private authService: AuthService,
     private router: Router,
@@ -84,5 +90,64 @@ export class Login {
 
   togglePassword() {
     this.showPassword = !this.showPassword;
+  }
+
+  showForgotPassword() {
+    this.mode = 'forgot';
+    this.resetEmail = this.email;
+    this.resetError = '';
+    this.resetSent = false;
+  }
+
+  backToLogin() {
+    this.mode = 'login';
+    this.resetError = '';
+    this.resetSent = false;
+  }
+
+  async sendResetEmail() {
+    if (!this.resetEmail) {
+      this.resetError = 'Please enter your email address.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    if (!isValidEmail(this.resetEmail)) {
+      this.resetError = 'Please enter a valid email address.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.resetSending = true;
+    this.resetError = '';
+    this.cdr.detectChanges();
+
+    try {
+      await this.authService.sendPasswordReset(this.resetEmail);
+      this.resetSent = true;
+    } catch (e: any) {
+      // Don't reveal whether an account exists for this email — show the
+      // same success state for "no account" as for a real send, and only
+      // surface genuine problems (rate limiting, malformed email).
+      if (e.code === 'auth/user-not-found') {
+        this.resetSent = true;
+      } else {
+        this.resetError = this.getResetErrorMessage(e.code);
+      }
+    } finally {
+      this.resetSending = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  private getResetErrorMessage(code: string): string {
+    switch (code) {
+      case 'auth/invalid-email':
+        return 'Please enter a valid email address.';
+      case 'auth/too-many-requests':
+        return 'Too many attempts. Please try again later.';
+      default:
+        return 'Something went wrong. Please try again.';
+    }
   }
 }

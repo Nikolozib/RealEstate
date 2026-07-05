@@ -32,74 +32,139 @@
   </div>
 
   <div class="auth-page__right">
-    <div class="auth-card">
 
-      <div class="auth-card__header">
-        <h1 class="auth-card__title">Welcome Back</h1>
-        <p class="auth-card__sub">Sign in to your account to continue</p>
-      </div>
+    @if (mode === 'login') {
+      <div class="auth-card">
 
-      <div class="auth-card__body">
-
-        @if (error) {
-          <div class="auth-card__error">
-            <i class="fa-solid fa-triangle-exclamation"></i>
-            {{ error }}
-          </div>
-        }
-
-        <div class="form-group">
-          <label class="form-label">Email Address</label>
-          <div class="form-input-wrap">
-            <i class="fa-solid fa-envelope form-input-icon"></i>
-            <input
-              type="email"
-              class="form-input"
-              placeholder="your@email.com"
-              [(ngModel)]="email"
-              (keyup.enter)="login()"
-            />
-          </div>
+        <div class="auth-card__header">
+          <h1 class="auth-card__title">Welcome Back</h1>
+          <p class="auth-card__sub">Sign in to your account to continue</p>
         </div>
 
-        <div class="form-group">
-          <div class="form-label-row">
-            <label class="form-label">Password</label>
-            <a href="#" class="form-forgot">Forgot password?</a>
-          </div>
-          <div class="form-input-wrap">
-            <i class="fa-solid fa-lock form-input-icon"></i>
-            <input
-              [type]="showPassword ? 'text' : 'password'"
-              class="form-input"
-              placeholder="Enter your password"
-              [(ngModel)]="password"
-              (keyup.enter)="login()"
-            />
-            <button class="form-input-toggle" (click)="togglePassword()" type="button">
-              <i [class]="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
-            </button>
-          </div>
-        </div>
+        <div class="auth-card__body">
 
-        <button
-          class="btn btn--primary btn--full"
-          (click)="login()"
-          [disabled]="loading">
-          @if (loading) {
-            <i class="fa-solid fa-spinner fa-spin"></i> Signing in...
-          } @else {
-            Sign In <i class="fa-solid fa-arrow-right"></i>
+          @if (error) {
+            <div class="auth-card__error">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              {{ error }}
+            </div>
           }
-        </button>
 
-        <p class="auth-card__switch">
-          Don't have an account?
-          <a routerLink="/auth/register" class="auth-card__switch-link">Create one free</a>
-        </p>
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <div class="form-input-wrap">
+              <i class="fa-solid fa-envelope form-input-icon"></i>
+              <input
+                type="email"
+                class="form-input"
+                placeholder="your@email.com"
+                [(ngModel)]="email"
+                (keyup.enter)="login()"
+              />
+            </div>
+          </div>
 
+          <div class="form-group">
+            <div class="form-label-row">
+              <label class="form-label">Password</label>
+              <button type="button" class="form-forgot" (click)="showForgotPassword()">Forgot password?</button>
+            </div>
+            <div class="form-input-wrap">
+              <i class="fa-solid fa-lock form-input-icon"></i>
+              <input
+                [type]="showPassword ? 'text' : 'password'"
+                class="form-input"
+                placeholder="Enter your password"
+                [(ngModel)]="password"
+                (keyup.enter)="login()"
+              />
+              <button class="form-input-toggle" (click)="togglePassword()" type="button">
+                <i [class]="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+              </button>
+            </div>
+          </div>
+
+          <button
+            class="btn btn--primary btn--full"
+            (click)="login()"
+            [disabled]="loading">
+            @if (loading) {
+              <i class="fa-solid fa-spinner fa-spin"></i> Signing in...
+            } @else {
+              Sign In <i class="fa-solid fa-arrow-right"></i>
+            }
+          </button>
+
+          <p class="auth-card__switch">
+            Don't have an account?
+            <a routerLink="/auth/register" class="auth-card__switch-link">Create one free</a>
+          </p>
+
+        </div>
       </div>
-    </div>
+    }
+
+    @if (mode === 'forgot') {
+      <div class="auth-card">
+
+        <div class="auth-card__header">
+          <h1 class="auth-card__title">Reset your password</h1>
+          <p class="auth-card__sub">Enter your email and we'll send you a link to reset it</p>
+        </div>
+
+        <div class="auth-card__body">
+
+          @if (!resetSent) {
+
+            @if (resetError) {
+              <div class="auth-card__error">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                {{ resetError }}
+              </div>
+            }
+
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <div class="form-input-wrap">
+                <i class="fa-solid fa-envelope form-input-icon"></i>
+                <input
+                  type="email"
+                  class="form-input"
+                  placeholder="your@email.com"
+                  [(ngModel)]="resetEmail"
+                  (keyup.enter)="sendResetEmail()"
+                />
+              </div>
+            </div>
+
+            <button
+              class="btn btn--primary btn--full"
+              (click)="sendResetEmail()"
+              [disabled]="resetSending">
+              @if (resetSending) {
+                <i class="fa-solid fa-spinner fa-spin"></i> Sending...
+              } @else {
+                <i class="fa-solid fa-paper-plane"></i> Send Reset Link
+              }
+            </button>
+
+          } @else {
+            <div class="auth-card__success">
+              <i class="fa-solid fa-circle-check"></i>
+              If an account exists for that email, we've sent a password reset link. Check your inbox.
+            </div>
+          }
+
+          <p class="auth-card__switch">
+            <button type="button" class="auth-card__switch-link auth-card__switch-link--btn" (click)="backToLogin()">
+              <i class="fa-solid fa-arrow-left"></i> Back to sign in
+            </button>
+          </p>
+
+        </div>
+      </div>
+    }
+
   </div>
 
 </div>

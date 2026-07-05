@@ -5,6 +5,7 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   sendEmailVerification,
+  sendPasswordResetEmail,
   EmailAuthProvider,
   reauthenticateWithCredential,
   updatePassword,
@@ -49,6 +50,10 @@ export class AuthService {
 
   sendVerificationEmail(firebaseUser: FirebaseUser): Promise<void> {
     return sendEmailVerification(firebaseUser);
+  }
+
+  sendPasswordReset(email: string): Promise<void> {
+    return sendPasswordResetEmail(this.auth, email);
   }
 
   // updatePassword requires a "recent" login — reauthenticating with the
