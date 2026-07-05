@@ -65,7 +65,10 @@ export class PropertyDetail implements OnInit {
       if (u && u.emailVerified) {
         this.userService.getUserById(u.uid).pipe(take(1)).subscribe(userData => {
           this.isSaved = userData?.savedProperties?.includes(this.property?.id ?? '') ?? false;
+          this.cdr.detectChanges();
         });
+      } else {
+        this.cdr.detectChanges();
       }
     });
 
@@ -134,31 +137,37 @@ export class PropertyDetail implements OnInit {
     if (!this.property) return;
     if (!this.inquiryName || !this.inquiryEmail || !this.inquiryMessage) {
       this.inquiryError = 'Please fill in all required fields.';
+      this.cdr.detectChanges();
       return;
     }
 
     if (!isValidName(this.inquiryName)) {
       this.inquiryError = 'Please enter a valid name (letters only, at least 2 characters).';
+      this.cdr.detectChanges();
       return;
     }
 
     if (!isValidEmail(this.inquiryEmail)) {
       this.inquiryError = 'Please enter a valid email address.';
+      this.cdr.detectChanges();
       return;
     }
 
     if (this.inquiryPhone.trim() && !isValidPhone(this.inquiryPhone)) {
       this.inquiryError = 'Please enter a valid phone number (digits only, 7–15 digits).';
+      this.cdr.detectChanges();
       return;
     }
 
     if (!isValidMessage(this.inquiryMessage)) {
       this.inquiryError = 'Message must be at least 10 characters.';
+      this.cdr.detectChanges();
       return;
     }
 
     this.inquirySending = true;
     this.inquiryError = '';
+    this.cdr.detectChanges();
 
     try {
       await this.inquiryService.sendInquiry({
@@ -177,13 +186,17 @@ export class PropertyDetail implements OnInit {
       this.inquiryPhone = '';
       this.inquiryMessage = '';
       // The success box replaces the form in place; if the user scrolled down
-      // to reach the submit button, it renders above the fold. Wait a tick for
-      // Angular to render the @if block, then bring it into view.
-      setTimeout(() => this.inquirySuccessBox?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+      // to reach the submit button, it renders above the fold. detectChanges()
+      // forces Angular to paint it synchronously (this app is zoneless, so
+      // nothing does that automatically), so the ViewChild is already
+      // resolved by the time we scroll to it.
+      this.cdr.detectChanges();
+      this.inquirySuccessBox?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
     } catch (e) {
       this.inquiryError = 'Something went wrong. Please try again.';
     } finally {
       this.inquirySending = false;
+      this.cdr.detectChanges();
     }
   }
 

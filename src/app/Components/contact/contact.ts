@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { InquiryService } from '../../core/services/inquiry';
 import { SeoService } from '../../core/services/seo';
@@ -53,6 +53,7 @@ export class Contact implements OnInit {
   constructor(
     private inquiryService: InquiryService,
     private seo: SeoService,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit() {
@@ -66,31 +67,37 @@ export class Contact implements OnInit {
   async send() {
     if (!this.name || !this.email || !this.message) {
       this.error = 'Please fill in all required fields.';
+      this.cdr.detectChanges();
       return;
     }
 
     if (!isValidName(this.name)) {
       this.error = 'Please enter a valid name (letters only, at least 2 characters).';
+      this.cdr.detectChanges();
       return;
     }
 
     if (!isValidEmail(this.email)) {
       this.error = 'Please enter a valid email address.';
+      this.cdr.detectChanges();
       return;
     }
 
     if (this.phone.trim() && !isValidPhone(this.phone)) {
       this.error = 'Please enter a valid phone number (digits only, 7–15 digits).';
+      this.cdr.detectChanges();
       return;
     }
 
     if (!isValidMessage(this.message)) {
       this.error = 'Message must be at least 10 characters.';
+      this.cdr.detectChanges();
       return;
     }
 
     this.sending = true;
     this.error = '';
+    this.cdr.detectChanges();
 
     try {
       await this.inquiryService.sendInquiry({
@@ -110,13 +117,20 @@ export class Contact implements OnInit {
       this.subject = '';
       this.message = '';
       // The success box replaces the form in place; if the user scrolled down
-      // to reach the submit button, it renders above the fold. Wait a tick for
-      // Angular to render the @if block, then bring it into view.
-      setTimeout(() => this.successBox?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+      // to reach the submit button, it renders above the fold. detectChanges()
+      // forces Angular to paint it synchronously (this app is zoneless, so
+      // nothing does that automatically), so the ViewChild is already
+      // resolved by the time we scroll to it.
+      this.cdr.detectChanges();
+      this.successBox?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
     } catch (e) {
       this.error = 'Something went wrong. Please try again.';
     } finally {
       this.sending = false;
+      // Zoneless app: awaiting a Firestore call isn't tracked by Angular's
+      // change-detection scheduler, so without this the UI would only
+      // refresh once some unrelated event happened to trigger a tick.
+      this.cdr.detectChanges();
     }
   }
 }

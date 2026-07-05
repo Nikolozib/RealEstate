@@ -179,6 +179,7 @@
                   class="form-input"
                   placeholder="Your full name"
                   [(ngModel)]="inquiryName"
+                  (keyup.enter)="sendInquiry()"
                 />
               </div>
 
@@ -189,6 +190,7 @@
                   class="form-input"
                   placeholder="your@email.com"
                   [(ngModel)]="inquiryEmail"
+                  (keyup.enter)="sendInquiry()"
                 />
               </div>
 
@@ -199,6 +201,7 @@
                   class="form-input"
                   placeholder="+995 555 000 000"
                   [(ngModel)]="inquiryPhone"
+                  (keyup.enter)="sendInquiry()"
                 />
               </div>
 

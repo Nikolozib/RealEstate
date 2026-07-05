@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth';
@@ -21,21 +21,25 @@ export class Login {
   constructor(
     private authService: AuthService,
     private router: Router,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   async login() {
     if (!this.email || !this.password) {
       this.error = 'Please fill in all fields.';
+      this.cdr.detectChanges();
       return;
     }
 
     if (!isValidEmail(this.email)) {
       this.error = 'Please enter a valid email address.';
+      this.cdr.detectChanges();
       return;
     }
 
     this.loading = true;
     this.error = '';
+    this.cdr.detectChanges();
 
     try {
       const cred = await this.authService.login(this.email, this.password);
@@ -53,6 +57,11 @@ export class Login {
       this.error = this.getErrorMessage(e.code);
     } finally {
       this.loading = false;
+      // This app runs zoneless: awaiting a Firebase call isn't tracked by
+      // Angular's change-detection scheduler, so without this the UI would
+      // only refresh once some unrelated event (a scroll, a click) happened
+      // to trigger a tick elsewhere.
+      this.cdr.detectChanges();
     }
   }
 

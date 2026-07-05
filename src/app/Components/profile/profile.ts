@@ -7,7 +7,7 @@ import { AuthService } from '../../core/services/auth';
 import { UserService } from '../../core/services/user';
 import { SeoService } from '../../core/services/seo';
 import { User } from '../../core/services/models/user.model';
-import { isValidName, isValidPhone } from '../../core/utils/validation';
+import { isValidName, isValidPassword, isValidPhone } from '../../core/utils/validation';
 import * as AOS from 'aos';
 
 @Component({
@@ -27,6 +27,16 @@ export class Profile implements OnInit {
   displayName = '';
   phone = '';
   activeTab = 'profile';
+
+  showChangePassword = false;
+  currentPassword = '';
+  newPassword = '';
+  confirmNewPassword = '';
+  showCurrentPassword = false;
+  showNewPassword = false;
+  changingPassword = false;
+  passwordError = '';
+  passwordSuccess = false;
 
   constructor(
     private authService: AuthService,
@@ -78,21 +88,25 @@ export class Profile implements OnInit {
     const currentUser = this.authService.getCurrentUser();
     if (!currentUser || !this.displayName.trim()) {
       this.error = 'Display name cannot be empty.';
+      this.cdr.detectChanges();
       return;
     }
 
     if (!isValidName(this.displayName)) {
       this.error = 'Please enter a valid name (letters only, at least 2 characters).';
+      this.cdr.detectChanges();
       return;
     }
 
     if (this.phone.trim() && !isValidPhone(this.phone)) {
       this.error = 'Please enter a valid phone number (digits only, 7–15 digits).';
+      this.cdr.detectChanges();
       return;
     }
 
     this.saving = true;
     this.error = '';
+    this.cdr.detectChanges();
 
     try {
       await this.userService.updateUserProfile(currentUser.uid, {
@@ -105,13 +119,93 @@ export class Profile implements OnInit {
         this.user.phone = this.phone;
       }
       this.saved = true;
-      setTimeout(() => (this.saved = false), 3000);
+      setTimeout(() => {
+        this.saved = false;
+        this.cdr.detectChanges();
+      }, 3000);
     } catch (e) {
       this.error = 'Failed to update profile. Please try again.';
     } finally {
       this.saving = false;
+      this.cdr.detectChanges();
     }
   }
+
+  toggleChangePassword() {
+    this.showChangePassword = !this.showChangePassword;
+    this.passwordError = '';
+    this.passwordSuccess = false;
+    this.currentPassword = '';
+    this.newPassword = '';
+    this.confirmNewPassword = '';
+    this.showCurrentPassword = false;
+    this.showNewPassword = false;
+  }
+
+  async changePassword() {
+    if (!this.currentPassword || !this.newPassword || !this.confirmNewPassword) {
+      this.passwordError = 'Please fill in all fields.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    if (!isValidPassword(this.newPassword)) {
+      this.passwordError = 'New password must be at least 6 characters.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    if (this.newPassword !== this.confirmNewPassword) {
+      this.passwordError = 'New passwords do not match.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    if (this.newPassword === this.currentPassword) {
+      this.passwordError = 'New password must be different from your current password.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.changingPassword = true;
+    this.passwordError = '';
+    this.cdr.detectChanges();
+
+    try {
+      await this.authService.changePassword(this.currentPassword, this.newPassword);
+      this.passwordSuccess = true;
+      this.currentPassword = '';
+      this.newPassword = '';
+      this.confirmNewPassword = '';
+      setTimeout(() => {
+        this.showChangePassword = false;
+        this.passwordSuccess = false;
+        this.cdr.detectChanges();
+      }, 2500);
+    } catch (e: any) {
+      this.passwordError = this.getPasswordErrorMessage(e.code);
+    } finally {
+      this.changingPassword = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  private getPasswordErrorMessage(code: string): string {
+    switch (code) {
+      case 'auth/wrong-password':
+      case 'auth/invalid-credential':
+        return 'Current password is incorrect.';
+      case 'auth/weak-password':
+        return 'New password is too weak.';
+      case 'auth/too-many-requests':
+        return 'Too many attempts. Please try again later.';
+      default:
+        return 'Failed to change password. Please try again.';
+    }
+  }
+
+  toggleCurrentPasswordVisibility() { this.showCurrentPassword = !this.showCurrentPassword; }
+  toggleNewPasswordVisibility()     { this.showNewPassword = !this.showNewPassword; }
 
   async logout() {
     await this.authService.logout();

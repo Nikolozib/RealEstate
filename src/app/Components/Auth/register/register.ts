@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth';
@@ -36,40 +36,50 @@ export class Register implements OnDestroy {
 
   private pollInterval: any = null;
 
+  @ViewChild('verifyCard') verifyCard?: ElementRef<HTMLElement>;
+
   constructor(
     private authService: AuthService,
     private userService: UserService,
     private router: Router,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   async register() {
     if (!this.displayName || !this.email || !this.password || !this.confirmPassword) {
       this.error = 'Please fill in all required fields.';
+      this.cdr.detectChanges();
       return;
     }
     if (!isValidName(this.displayName)) {
       this.error = 'Please enter a valid name (letters only, at least 2 characters).';
+      this.cdr.detectChanges();
       return;
     }
     if (!isValidEmail(this.email)) {
       this.error = 'Please enter a valid email address.';
+      this.cdr.detectChanges();
       return;
     }
     if (this.phone.trim() && !isValidPhone(this.phone)) {
       this.error = 'Please enter a valid phone number (digits only, 7–15 digits).';
+      this.cdr.detectChanges();
       return;
     }
     if (!isValidPassword(this.password)) {
       this.error = 'Password must be at least 6 characters.';
+      this.cdr.detectChanges();
       return;
     }
     if (this.password !== this.confirmPassword) {
       this.error = 'Passwords do not match.';
+      this.cdr.detectChanges();
       return;
     }
 
     this.loading = true;
     this.error = '';
+    this.cdr.detectChanges();
 
     try {
       const cred = await this.authService.register(this.email, this.password);
@@ -91,6 +101,7 @@ export class Register implements OnDestroy {
 
       this.registeredEmail = this.email;
       this.registrationComplete = true;
+      this.scrollToVerifyCard();
 
       // Poll Firebase every 3 seconds — when the user clicks the link
       // in their email, emailVerified flips to true and we redirect automatically.
@@ -105,6 +116,11 @@ export class Register implements OnDestroy {
       }
     } finally {
       this.loading = false;
+      // This app runs zoneless: awaiting a Firebase call isn't tracked by
+      // Angular's change-detection scheduler, so without this the UI would
+      // only refresh once some unrelated event (a scroll, a click) happened
+      // to trigger a tick elsewhere.
+      this.cdr.detectChanges();
     }
   }
 
@@ -126,10 +142,21 @@ export class Register implements OnDestroy {
       await this.authService.sendVerificationEmail(cred.user);
       this.registeredEmail = this.email;
       this.registrationComplete = true;
+      this.scrollToVerifyCard();
       this.startPolling();
     } catch {
       this.error = 'An account with this email already exists. If it\'s yours, sign in instead — or use a different email.';
     }
+  }
+
+  // The "check your inbox" card replaces the registration form in place; if
+  // the user scrolled down to reach the submit button, it renders above the
+  // fold. detectChanges() forces Angular to paint it synchronously (this app
+  // is zoneless, so nothing does that automatically), so the ViewChild is
+  // already resolved by the time we scroll to it.
+  private scrollToVerifyCard() {
+    this.cdr.detectChanges();
+    this.verifyCard?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   private startPolling() {
@@ -169,11 +196,15 @@ export class Register implements OnDestroy {
     try {
       await this.authService.sendVerificationEmail(user);
       this.resendSuccess = true;
-      setTimeout(() => (this.resendSuccess = false), 4000);
+      setTimeout(() => {
+        this.resendSuccess = false;
+        this.cdr.detectChanges();
+      }, 4000);
     } catch (e) {
       console.warn('Resend failed:', e);
     } finally {
       this.resendLoading = false;
+      this.cdr.detectChanges();
     }
   }
 

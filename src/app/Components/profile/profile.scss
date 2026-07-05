@@ -301,6 +301,27 @@ $transition:    all 0.3s ease;
   }
 
   &::placeholder { color: $text-secondary; }
+
+  &.mismatch {
+    border-color: #c0392b;
+    box-shadow: 0 0 0 3px rgba(192,57,43,0.08);
+  }
+}
+
+.form-input-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: $text-secondary;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px;
+  transition: $transition;
+
+  &:hover { color: $text; }
 }
 
 .form-hint {
@@ -394,6 +415,17 @@ $transition:    all 0.3s ease;
       border-color: $primary;
     }
   }
+}
+
+.password-change {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: $bg;
+  border: 1px solid $border;
+  border-radius: 10px;
+  padding: 24px;
+  margin: -8px 0 24px;
 }
 
 .profile-danger {

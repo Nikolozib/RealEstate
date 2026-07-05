@@ -5,6 +5,9 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   sendEmailVerification,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updatePassword,
   user,
   User as FirebaseUser,
 } from '@angular/fire/auth';
@@ -46,5 +49,18 @@ export class AuthService {
 
   sendVerificationEmail(firebaseUser: FirebaseUser): Promise<void> {
     return sendEmailVerification(firebaseUser);
+  }
+
+  // updatePassword requires a "recent" login — reauthenticating with the
+  // current password first guarantees that regardless of session age, and
+  // doubles as proof the caller actually knows the current password.
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    const firebaseUser = this.auth.currentUser;
+    if (!firebaseUser || !firebaseUser.email) {
+      throw new Error('No authenticated user.');
+    }
+    const credential = EmailAuthProvider.credential(firebaseUser.email, currentPassword);
+    await reauthenticateWithCredential(firebaseUser, credential);
+    await updatePassword(firebaseUser, newPassword);
   }
 }

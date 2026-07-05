@@ -56,7 +56,7 @@
             <label class="form-label">Full Name <span class="form-required">*</span></label>
             <div class="form-input-wrap">
               <i class="fa-solid fa-user form-input-icon"></i>
-              <input type="text" class="form-input" placeholder="Your full name" [(ngModel)]="displayName" />
+              <input type="text" class="form-input" placeholder="Your full name" [(ngModel)]="displayName" (keyup.enter)="register()" />
             </div>
           </div>
 
@@ -64,7 +64,7 @@
             <label class="form-label">Email Address <span class="form-required">*</span></label>
             <div class="form-input-wrap">
               <i class="fa-solid fa-envelope form-input-icon"></i>
-              <input type="email" class="form-input" placeholder="your@email.com" [(ngModel)]="email" />
+              <input type="email" class="form-input" placeholder="your@email.com" [(ngModel)]="email" (keyup.enter)="register()" />
             </div>
           </div>
 
@@ -72,7 +72,7 @@
             <label class="form-label">Phone Number</label>
             <div class="form-input-wrap">
               <i class="fa-solid fa-phone form-input-icon"></i>
-              <input type="tel" class="form-input" placeholder="+995 555 000 000" [(ngModel)]="phone" />
+              <input type="tel" class="form-input" placeholder="+995 555 000 000" [(ngModel)]="phone" (keyup.enter)="register()" />
             </div>
           </div>
 
@@ -85,6 +85,7 @@
                 class="form-input"
                 placeholder="Min. 6 characters"
                 [(ngModel)]="password"
+                (keyup.enter)="register()"
               />
               <button class="form-input-toggle" (click)="togglePassword()" type="button">
                 <i [class]="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
@@ -123,6 +124,7 @@
                 [class.mismatch]="confirmPassword && confirmPassword !== password"
                 placeholder="Repeat your password"
                 [(ngModel)]="confirmPassword"
+                (keyup.enter)="register()"
               />
               <button class="form-input-toggle" (click)="toggleConfirm()" type="button">
                 <i [class]="showConfirm ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
@@ -164,31 +166,47 @@
 
     <!-- ── STATE 2: Waiting for verification ───────────────── -->
     @if (registrationComplete) {
-      <div class="auth-card">
+      <div class="auth-card verify-card" #verifyCard>
         <div class="auth-card__header">
 
-          <div class="auth-card__verify-icon">
-            <i class="fa-regular fa-envelope"></i>
+          <div class="verify-badge">
+            <span class="verify-badge__ring"></span>
+            <span class="verify-badge__ring verify-badge__ring--delay"></span>
+            <i class="fa-solid fa-paper-plane"></i>
           </div>
 
           <h1 class="auth-card__title">Check your inbox</h1>
-          <p class="auth-card__sub">We sent a verification link to</p>
-          <p class="auth-card__verify-email">{{ registeredEmail }}</p>
+          <p class="auth-card__sub">We've sent a verification link to</p>
+          <p class="verify-email">
+            <i class="fa-regular fa-envelope"></i>
+            {{ registeredEmail }}
+          </p>
 
         </div>
 
         <div class="auth-card__body">
 
           <!-- Animated waiting indicator -->
-          <div class="auth-card__waiting">
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            <span>Waiting for verification…</span>
+          <div class="verify-status">
+            <span class="verify-status__dots">
+              <span></span><span></span><span></span>
+            </span>
+            Waiting for confirmation
           </div>
 
           <p class="auth-card__verify-info">
-            Click the link in that email. This page will automatically
-            redirect you once your email is confirmed.
+            Open the email and click the link inside — you'll land back
+            here automatically the moment it's confirmed.
           </p>
+
+          <div class="verify-quick-links">
+            <a href="https://mail.google.com" target="_blank" rel="noopener" class="verify-quick-link">
+              <i class="fa-brands fa-google"></i> Open Gmail
+            </a>
+            <a href="https://outlook.live.com/mail/" target="_blank" rel="noopener" class="verify-quick-link">
+              <i class="fa-regular fa-envelope-open"></i> Open Outlook
+            </a>
+          </div>
 
           @if (profileWarning) {
             <div class="auth-card__warning">
@@ -217,7 +235,7 @@
             }
           </button>
 
-          <p class="auth-card__verify-info" style="margin-top: 0.75rem; font-size: 0.82rem;">
+          <p class="verify-footnote">
             <i class="fa-solid fa-triangle-exclamation"></i>
             Don't see it? Check your spam folder.
           </p>

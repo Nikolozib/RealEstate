@@ -67,14 +67,14 @@
               <label class="form-label">Full Name <span class="form-req">*</span></label>
               <div class="form-input-wrap">
                 <i class="fa-solid fa-user form-input-icon"></i>
-                <input type="text" class="form-input" placeholder="Your name" [(ngModel)]="name" />
+                <input type="text" class="form-input" placeholder="Your name" [(ngModel)]="name" (keyup.enter)="send()" />
               </div>
             </div>
             <div class="form-group">
               <label class="form-label">Email <span class="form-req">*</span></label>
               <div class="form-input-wrap">
                 <i class="fa-solid fa-envelope form-input-icon"></i>
-                <input type="email" class="form-input" placeholder="your@email.com" [(ngModel)]="email" />
+                <input type="email" class="form-input" placeholder="your@email.com" [(ngModel)]="email" (keyup.enter)="send()" />
               </div>
             </div>
           </div>
@@ -84,14 +84,14 @@
               <label class="form-label">Phone</label>
               <div class="form-input-wrap">
                 <i class="fa-solid fa-phone form-input-icon"></i>
-                <input type="tel" class="form-input" placeholder="+995 555 000 000" [(ngModel)]="phone" />
+                <input type="tel" class="form-input" placeholder="+995 555 000 000" [(ngModel)]="phone" (keyup.enter)="send()" />
               </div>
             </div>
             <div class="form-group">
               <label class="form-label">Subject</label>
               <div class="form-input-wrap">
                 <i class="fa-solid fa-tag form-input-icon"></i>
-                <input type="text" class="form-input" placeholder="How can we help?" [(ngModel)]="subject" />
+                <input type="text" class="form-input" placeholder="How can we help?" [(ngModel)]="subject" (keyup.enter)="send()" />
               </div>
             </div>
           </div>

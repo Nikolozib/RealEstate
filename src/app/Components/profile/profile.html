@@ -144,9 +144,87 @@
                 <span class="profile-security__label">Password</span>
                 <span class="profile-security__value">••••••••</span>
               </div>
-              <button class="profile-security__btn">Change</button>
+              <button class="profile-security__btn" (click)="toggleChangePassword()">
+                {{ showChangePassword ? 'Cancel' : 'Change' }}
+              </button>
             </div>
           </div>
+
+          @if (showChangePassword) {
+            <div class="password-change" data-aos="fade-up">
+
+              @if (passwordSuccess) {
+                <div class="profile-card__success">
+                  <i class="fa-solid fa-circle-check"></i>
+                  Password changed successfully!
+                </div>
+              }
+
+              @if (passwordError) {
+                <div class="profile-card__error">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  {{ passwordError }}
+                </div>
+              }
+
+              <div class="form-group">
+                <label class="form-label">Current Password</label>
+                <div class="form-input-wrap">
+                  <i class="fa-solid fa-lock form-input-icon"></i>
+                  <input
+                    [type]="showCurrentPassword ? 'text' : 'password'"
+                    class="form-input"
+                    placeholder="Enter your current password"
+                    [(ngModel)]="currentPassword"
+                    (keyup.enter)="changePassword()"
+                  />
+                  <button class="form-input-toggle" (click)="toggleCurrentPasswordVisibility()" type="button">
+                    <i [class]="showCurrentPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">New Password</label>
+                <div class="form-input-wrap">
+                  <i class="fa-solid fa-lock form-input-icon"></i>
+                  <input
+                    [type]="showNewPassword ? 'text' : 'password'"
+                    class="form-input"
+                    placeholder="Min. 6 characters"
+                    [(ngModel)]="newPassword"
+                    (keyup.enter)="changePassword()"
+                  />
+                  <button class="form-input-toggle" (click)="toggleNewPasswordVisibility()" type="button">
+                    <i [class]="showNewPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Confirm New Password</label>
+                <div class="form-input-wrap">
+                  <i class="fa-solid fa-lock form-input-icon"></i>
+                  <input
+                    [type]="showNewPassword ? 'text' : 'password'"
+                    class="form-input"
+                    [class.mismatch]="confirmNewPassword && confirmNewPassword !== newPassword"
+                    placeholder="Repeat new password"
+                    [(ngModel)]="confirmNewPassword"
+                    (keyup.enter)="changePassword()"
+                  />
+                </div>
+              </div>
+
+              <button class="btn btn--primary" (click)="changePassword()" [disabled]="changingPassword">
+                @if (changingPassword) {
+                  <i class="fa-solid fa-spinner fa-spin"></i> Updating...
+                } @else {
+                  <i class="fa-solid fa-key"></i> Update Password
+                }
+              </button>
+            </div>
+          }
 
           <div class="profile-danger">
             <h3 class="profile-danger__title">Danger Zone</h3>
