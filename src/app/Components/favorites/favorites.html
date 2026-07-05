@@ -52,7 +52,9 @@
           <div class="property-card" data-aos="fade-up" [attr.data-aos-delay]="(i % 3) * 100">
 
             <a [routerLink]="['/listings', property.id]" class="property-card__img-wrap">
-              <img [src]="property.thumbnailUrl" [alt]="property.title" class="property-card__img" loading="lazy" />
+              @if (property.thumbnailUrl) {
+                <img [ngSrc]="property.thumbnailUrl" [alt]="property.title" class="property-card__img" fill loading="lazy" />
+              }
               <span class="property-card__badge" [class.rent]="property.priceType === 'rent'">
                 {{ property.priceType === 'rent' ? 'For Rent' : 'For Sale' }}
               </span>

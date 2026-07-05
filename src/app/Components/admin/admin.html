@@ -75,25 +75,25 @@
               </div>
             }
 
-            <div class="admin-form">
+            <form class="admin-form" [formGroup]="propertyForm" (ngSubmit)="saveProperty()">
               <div class="admin-form__section">
                 <h3 class="admin-form__section-title">Basic Info</h3>
                 <div class="admin-form__grid">
                   <div class="form-group admin-form__full">
                     <label class="form-label">Title <span class="req">*</span></label>
-                    <input type="text" class="form-input" [(ngModel)]="form.title" placeholder="Property title" />
+                    <input type="text" class="form-input" formControlName="title" placeholder="Property title" />
                   </div>
                   <div class="form-group admin-form__full">
                     <label class="form-label">Description</label>
-                    <textarea class="form-input form-textarea" [(ngModel)]="form.description" rows="3" placeholder="Full description"></textarea>
+                    <textarea class="form-input form-textarea" formControlName="description" rows="3" placeholder="Full description"></textarea>
                   </div>
                   <div class="form-group">
                     <label class="form-label">Price ($) <span class="req">*</span></label>
-                    <input type="number" class="form-input" [(ngModel)]="form.price" placeholder="e.g. 95000" />
+                    <input type="number" class="form-input" formControlName="price" placeholder="e.g. 95000" />
                   </div>
                   <div class="form-group">
                     <label class="form-label">Price Type</label>
-                    <select class="form-input form-select" [(ngModel)]="form.priceType">
+                    <select class="form-input form-select" formControlName="priceType">
                       @for (t of priceTypes; track t) {
                         <option [value]="t">{{ t }}</option>
                       }
@@ -101,7 +101,7 @@
                   </div>
                   <div class="form-group">
                     <label class="form-label">Property Type</label>
-                    <select class="form-input form-select" [(ngModel)]="form.propertyType">
+                    <select class="form-input form-select" formControlName="propertyType">
                       @for (t of propertyTypes; track t) {
                         <option [value]="t">{{ t }}</option>
                       }
@@ -109,7 +109,7 @@
                   </div>
                   <div class="form-group">
                     <label class="form-label">Status</label>
-                    <select class="form-input form-select" [(ngModel)]="form.status">
+                    <select class="form-input form-select" formControlName="status">
                       @for (s of statusOptions; track s) {
                         <option [value]="s">{{ s }}</option>
                       }
@@ -123,15 +123,15 @@
                 <div class="admin-form__grid">
                   <div class="form-group">
                     <label class="form-label">City</label>
-                    <input type="text" class="form-input" [(ngModel)]="form.city" placeholder="e.g. Tbilisi" />
+                    <input type="text" class="form-input" formControlName="city" placeholder="e.g. Tbilisi" />
                   </div>
                   <div class="form-group">
                     <label class="form-label">District</label>
-                    <input type="text" class="form-input" [(ngModel)]="form.district" placeholder="e.g. Vake" />
+                    <input type="text" class="form-input" formControlName="district" placeholder="e.g. Vake" />
                   </div>
                   <div class="form-group admin-form__full">
                     <label class="form-label">Address</label>
-                    <input type="text" class="form-input" [(ngModel)]="form.address" placeholder="Full address" />
+                    <input type="text" class="form-input" formControlName="address" placeholder="Full address" />
                   </div>
                 </div>
               </div>
@@ -141,31 +141,31 @@
                 <div class="admin-form__grid admin-form__grid--3">
                   <div class="form-group">
                     <label class="form-label">Bedrooms</label>
-                    <input type="number" class="form-input" [(ngModel)]="form.bedrooms" min="0" />
+                    <input type="number" class="form-input" formControlName="bedrooms" min="0" />
                   </div>
                   <div class="form-group">
                     <label class="form-label">Bathrooms</label>
-                    <input type="number" class="form-input" [(ngModel)]="form.bathrooms" min="0" />
+                    <input type="number" class="form-input" formControlName="bathrooms" min="0" />
                   </div>
                   <div class="form-group">
                     <label class="form-label">Area (m²) <span class="req">*</span></label>
-                    <input type="number" class="form-input" [(ngModel)]="form.area" min="0" />
+                    <input type="number" class="form-input" formControlName="area" min="0" />
                   </div>
                   <div class="form-group">
                     <label class="form-label">Floor</label>
-                    <input type="number" class="form-input" [(ngModel)]="form.floor" min="0" />
+                    <input type="number" class="form-input" formControlName="floor" min="0" />
                   </div>
                   <div class="form-group">
                     <label class="form-label">Total Floors</label>
-                    <input type="number" class="form-input" [(ngModel)]="form.totalFloors" min="0" />
+                    <input type="number" class="form-input" formControlName="totalFloors" min="0" />
                   </div>
                   <div class="form-group">
                     <label class="form-label">Year Built</label>
-                    <input type="number" class="form-input" [(ngModel)]="form.yearBuilt" />
+                    <input type="number" class="form-input" formControlName="yearBuilt" />
                   </div>
                   <div class="form-group">
                     <label class="form-label">Parking Spots</label>
-                    <input type="number" class="form-input" [(ngModel)]="form.parkingSpots" min="0" />
+                    <input type="number" class="form-input" formControlName="parkingSpots" min="0" />
                   </div>
                 </div>
               </div>
@@ -175,7 +175,7 @@
                 <div class="admin-form__grid">
                   <div class="form-group admin-form__full">
                     <label class="form-label">Thumbnail URL</label>
-                    <input type="text" class="form-input" [(ngModel)]="form.thumbnailUrl" placeholder="https://..." />
+                    <input type="text" class="form-input" formControlName="thumbnailUrl" placeholder="https://..." />
                   </div>
                   <div class="form-group admin-form__full">
                     <label class="form-label">Features</label>
@@ -197,17 +197,17 @@
                   <div class="form-group">
                     <label class="form-label">Featured Listing</label>
                     <label class="admin-toggle">
-                      <input type="checkbox" [(ngModel)]="form.isFeatured" />
+                      <input type="checkbox" formControlName="isFeatured" />
                       <span class="admin-toggle__slider"></span>
-                      <span class="admin-toggle__label">{{ form.isFeatured ? 'Yes — shown on home page' : 'No' }}</span>
+                      <span class="admin-toggle__label">{{ propertyForm.value.isFeatured ? 'Yes — shown on home page' : 'No' }}</span>
                     </label>
                   </div>
                 </div>
               </div>
 
               <div class="admin-form__actions">
-                <button class="btn btn--ghost" (click)="cancelForm()">Cancel</button>
-                <button class="btn btn--primary" (click)="saveProperty()" [disabled]="formSaving">
+                <button type="button" class="btn btn--ghost" (click)="cancelForm()">Cancel</button>
+                <button type="submit" class="btn btn--primary" [disabled]="formSaving">
                   @if (formSaving) {
                     <i class="fa-solid fa-spinner fa-spin"></i> Saving...
                   } @else {
@@ -216,7 +216,7 @@
                   }
                 </button>
               </div>
-            </div>
+            </form>
           </div>
         }
 
@@ -224,11 +224,17 @@
         <div class="admin-property-list" data-aos="fade-up">
           @for (property of properties; track property.id) {
             <div class="admin-property-item">
-              <img
-                [src]="property.thumbnailUrl"
-                [alt]="property.title"
-                class="admin-property-item__thumb"
-              />
+              @if (property.thumbnailUrl) {
+                <img
+                  [ngSrc]="property.thumbnailUrl"
+                  [alt]="property.title"
+                  width="96"
+                  height="72"
+                  class="admin-property-item__thumb"
+                />
+              } @else {
+                <div class="admin-property-item__thumb admin-property-item__thumb--empty"></div>
+              }
               <div class="admin-property-item__body">
                 <div class="admin-property-item__top">
                   <h3 class="admin-property-item__title">{{ property.title }}</h3>

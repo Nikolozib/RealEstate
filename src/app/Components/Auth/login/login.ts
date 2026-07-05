@@ -1,28 +1,36 @@
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth';
-import { isValidEmail } from '../../../core/utils/validation';
+import { emailValidator } from '../../../core/utils/form-validators';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [RouterLink, FormsModule],
+  imports: [RouterLink, ReactiveFormsModule],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
 export class Login {
-  email = '';
-  password = '';
+  private fb = inject(FormBuilder);
+
   loading = false;
   error = '';
   showPassword = false;
 
   mode: 'login' | 'forgot' = 'login';
-  resetEmail = '';
   resetSending = false;
   resetSent = false;
   resetError = '';
+
+  loginForm = this.fb.group({
+    email: ['', [Validators.required, emailValidator()]],
+    password: ['', [Validators.required]],
+  });
+
+  resetForm = this.fb.group({
+    resetEmail: ['', [Validators.required, emailValidator()]],
+  });
 
   constructor(
     private authService: AuthService,
@@ -31,24 +39,24 @@ export class Login {
   ) {}
 
   async login() {
-    if (!this.email || !this.password) {
-      this.error = 'Please fill in all fields.';
+    if (this.loginForm.invalid) {
+      this.loginForm.markAllAsTouched();
+      const email = this.loginForm.controls.email;
+      if (email.errors?.['required']) this.error = 'Please fill in all fields.';
+      else if (email.errors?.['invalidEmail']) this.error = 'Please enter a valid email address.';
+      else this.error = 'Please fill in all fields.';
       this.cdr.detectChanges();
       return;
     }
 
-    if (!isValidEmail(this.email)) {
-      this.error = 'Please enter a valid email address.';
-      this.cdr.detectChanges();
-      return;
-    }
+    const { email, password } = this.loginForm.getRawValue();
 
     this.loading = true;
     this.error = '';
     this.cdr.detectChanges();
 
     try {
-      const cred = await this.authService.login(this.email, this.password);
+      const cred = await this.authService.login(email!, password!);
 
       // Block unverified users — sign them out and show a clear message
       if (!cred.user.emailVerified) {
@@ -94,7 +102,7 @@ export class Login {
 
   showForgotPassword() {
     this.mode = 'forgot';
-    this.resetEmail = this.email;
+    this.resetForm.patchValue({ resetEmail: this.loginForm.value.email ?? '' });
     this.resetError = '';
     this.resetSent = false;
   }
@@ -106,14 +114,11 @@ export class Login {
   }
 
   async sendResetEmail() {
-    if (!this.resetEmail) {
-      this.resetError = 'Please enter your email address.';
-      this.cdr.detectChanges();
-      return;
-    }
-
-    if (!isValidEmail(this.resetEmail)) {
-      this.resetError = 'Please enter a valid email address.';
+    if (this.resetForm.invalid) {
+      this.resetForm.markAllAsTouched();
+      const resetEmail = this.resetForm.controls.resetEmail;
+      if (resetEmail.errors?.['required']) this.resetError = 'Please enter your email address.';
+      else this.resetError = 'Please enter a valid email address.';
       this.cdr.detectChanges();
       return;
     }
@@ -123,7 +128,7 @@ export class Login {
     this.cdr.detectChanges();
 
     try {
-      await this.authService.sendPasswordReset(this.resetEmail);
+      await this.authService.sendPasswordReset(this.resetForm.getRawValue().resetEmail!);
       this.resetSent = true;
     } catch (e: any) {
       // Don't reveal whether an account exists for this email — show the

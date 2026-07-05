@@ -10,7 +10,6 @@ $border:        #e8e4de;
 $transition:    all 0.3s ease;
 $sidebar-width: 260px;
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
 // ─── BUTTONS ──────────────────────────────────────────────
 .btn {
@@ -484,6 +483,10 @@ $sidebar-width: 260px;
     object-fit: cover;
     border: 1px solid $border;
     flex-shrink: 0;
+
+    &--empty {
+      background: $bg;
+    }
   }
 
   &__body {

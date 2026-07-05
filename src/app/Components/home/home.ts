@@ -1,6 +1,6 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject, PLATFORM_ID } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser, NgOptimizedImage } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
 import { PropertyService } from '../../core/services/property';
 import { Property } from '../../core/services/models/property.model';
@@ -10,7 +10,7 @@ import * as AOS from 'aos';
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterLink, CommonModule],
+  imports: [RouterLink, CommonModule, NgOptimizedImage],
   templateUrl: './home.html',
   styleUrl: './home.scss'
 })
@@ -72,6 +72,8 @@ export class Home implements OnInit, OnDestroy {
     { value: '8', label: 'Years Experience' }
   ];
 
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
   constructor(
     private propertyService: PropertyService,
     private seo: SeoService,
@@ -83,10 +85,13 @@ export class Home implements OnInit, OnDestroy {
       'RealEstate Georgia — Find Your Home',
       'Browse premium apartments, houses and villas for sale and rent across Tbilisi and Georgia.'
     );
+    this.seo.setCanonicalUrl('/');
 
     this.loadFeaturedProperties();
-    this.startSlider();
-    AOS.init({ duration: 800, easing: 'ease-in-out', once: true, offset: 60 });
+    if (this.isBrowser) {
+      this.startSlider();
+      AOS.init({ duration: 800, easing: 'ease-in-out', once: true, offset: 60 });
+    }
   }
 
   private async loadFeaturedProperties() {
@@ -99,7 +104,7 @@ export class Home implements OnInit, OnDestroy {
         props = await firstValueFrom(this.propertyService.getLatestProperties(count));
       }
       this.featuredProperties = props.slice(0, count);
-      setTimeout(() => AOS.refresh(), 50);
+      if (this.isBrowser) setTimeout(() => AOS.refresh(), 50);
     } catch (err) {
       console.error('Failed to load featured properties:', err);
       try {
@@ -120,8 +125,12 @@ export class Home implements OnInit, OnDestroy {
   }
 
   startSlider() {
+    // Zoneless app: a plain setInterval callback runs outside Angular's
+    // change-detection tracking, so without detectChanges() the slide index
+    // would update silently and the view would never repaint.
     this.slideInterval = setInterval(() => {
       this.nextSlide();
+      this.cdr.detectChanges();
     }, 5000);
   }
 

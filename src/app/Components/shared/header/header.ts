@@ -1,4 +1,5 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, HostListener, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth';
 import { UserService } from '../../../core/services/user';
@@ -21,6 +22,7 @@ export class Header implements OnInit {
   isAdmin = false;
 
   private readonly scrollThreshold = 50;
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   constructor(
     private authService: AuthService,
@@ -53,7 +55,7 @@ export class Header implements OnInit {
   }
 
   private updateScrollState() {
-    const scrolled = window.scrollY > this.scrollThreshold;
+    const scrolled = this.isBrowser && window.scrollY > this.scrollThreshold;
     this.isScrolled = scrolled;
     this.isVisible = scrolled || this.isMenuOpen;
   }

@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser, NgOptimizedImage } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { SeoService } from '../../core/services/seo';
 import * as AOS from 'aos';
@@ -6,7 +7,7 @@ import * as AOS from 'aos';
 @Component({
   selector: 'app-about',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, NgOptimizedImage],
   templateUrl: './about.html',
   styleUrl: './about.scss'
 })
@@ -46,6 +47,8 @@ export class About implements OnInit {
     { icon: 'fa-solid fa-heart', title: 'Care', desc: 'We treat every client as family. Your dream home matters to us just as much as it matters to you.' }
   ];
 
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
   constructor(private seo: SeoService) {}
 
   ngOnInit() {
@@ -53,6 +56,7 @@ export class About implements OnInit {
       'About Us | RealEstate Georgia',
       'Learn about our team, mission and values. We are Georgia\'s most trusted real estate platform.'
     );
-    AOS.init({ duration: 800, easing: 'ease-in-out', once: true, offset: 60 });
+    this.seo.setCanonicalUrl('/about');
+    if (this.isBrowser) AOS.init({ duration: 800, easing: 'ease-in-out', once: true, offset: 60 });
   }
 }

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Admin } from './admin';
+import { firebaseTestProviders } from '../../core/testing/test-providers';
 
 describe('Admin', () => {
   let component: Admin;
@@ -9,6 +10,7 @@ describe('Admin', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Admin],
+      providers: firebaseTestProviders(),
     }).compileComponents();
 
     fixture = TestBed.createComponent(Admin);

@@ -80,12 +80,15 @@
         @for (property of featuredProperties; track property.id) {
           <a [routerLink]="['/listings', property.id]" class="property-card" data-aos="fade-up">
             <div class="property-card__img-wrap">
-              <img
-                [src]="property.thumbnailUrl"
-                [alt]="property.title"
-                class="property-card__img"
-                loading="lazy"
-              />
+              @if (property.thumbnailUrl) {
+                <img
+                  [ngSrc]="property.thumbnailUrl"
+                  [alt]="property.title"
+                  class="property-card__img"
+                  fill
+                  loading="lazy"
+                />
+              }
               <span class="property-card__badge" [class.rent]="property.priceType === 'rent'">
                 {{ property.priceType === 'rent' ? 'For Rent' : 'For Sale' }}
               </span>
@@ -143,7 +146,7 @@
           </div>
           <p class="review-card__text">{{ review.text }}</p>
           <div class="review-card__author">
-            <img [src]="review.avatar" [alt]="review.name" class="review-card__avatar" />
+            <img [ngSrc]="review.avatar" [alt]="review.name" width="60" height="60" class="review-card__avatar" />
             <div>
               <span class="review-card__name">{{ review.name }}</span>
               <span class="review-card__city">{{ review.city }}</span>

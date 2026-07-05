@@ -1,6 +1,7 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser, NgOptimizedImage } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { take } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/services/auth';
@@ -8,6 +9,7 @@ import { UserService } from '../../core/services/user';
 import { PropertyService } from '../../core/services/property';
 import { InquiryService } from '../../core/services/inquiry';
 import { SeoService } from '../../core/services/seo';
+import { ToastService } from '../../core/services/toast';
 import { Property } from '../../core/services/models/property.model';
 import { Inquiry } from '../../core/services/models/inquiry.model';
 import { serverTimestamp } from '@angular/fire/firestore';
@@ -23,7 +25,7 @@ import * as AOS from 'aos';
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [RouterLink, FormsModule, Pagination],
+  imports: [RouterLink, ReactiveFormsModule, Pagination, NgOptimizedImage],
   templateUrl: './admin.html',
   styleUrl: './admin.scss',
 })
@@ -46,7 +48,7 @@ export class Admin implements OnInit {
   formSuccess = '';
   deleteConfirmId: string | null = null;
 
-  form = this.emptyForm();
+  features: string[] = [];
 
   propertyTypes = ['apartment', 'house', 'villa', 'commercial', 'land'];
   priceTypes = ['sale', 'rent'];
@@ -56,19 +58,44 @@ export class Admin implements OnInit {
     'garden', 'parking', 'security', 'gym',
   ];
 
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  private fb = inject(FormBuilder);
+
+  propertyForm = this.fb.group({
+    title: ['', Validators.required],
+    description: [''],
+    price: [0, [Validators.required, Validators.min(1)]],
+    priceType: ['sale'],
+    propertyType: ['apartment'],
+    status: ['available'],
+    city: ['Tbilisi'],
+    district: [''],
+    address: [''],
+    bedrooms: [1],
+    bathrooms: [1],
+    area: [0, [Validators.required, Validators.min(1)]],
+    floor: [1],
+    totalFloors: [1],
+    yearBuilt: [2020],
+    parkingSpots: [0],
+    thumbnailUrl: [''],
+    isFeatured: [false],
+  });
+
   constructor(
     private authService: AuthService,
     private userService: UserService,
     private propertyService: PropertyService,
     private inquiryService: InquiryService,
     private seo: SeoService,
+    private toast: ToastService,
     private router: Router,
     private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit() {
     this.seo.setPageMeta('Admin Panel | RealEstate Georgia', 'Manage properties and inquiries.');
-    AOS.init({ duration: 600, easing: 'ease-in-out', once: true });
+    if (this.isBrowser) AOS.init({ duration: 600, easing: 'ease-in-out', once: true });
 
     const user = this.authService.getCurrentUser();
     if (!user) {
@@ -98,7 +125,7 @@ export class Admin implements OnInit {
         this.inquiryService.getInquiriesByAgent('').pipe(take(1))
       );
       this.updateInquiriesPagination();
-      setTimeout(() => AOS.refresh(), 50);
+      if (this.isBrowser) setTimeout(() => AOS.refresh(), 50);
     } catch (e) {
       console.error('Failed to load admin data:', e);
     } finally {
@@ -133,8 +160,8 @@ export class Admin implements OnInit {
     );
   }
 
-  emptyForm() {
-    return {
+  openAddForm() {
+    this.propertyForm.reset({
       title: '',
       description: '',
       price: 0,
@@ -153,12 +180,8 @@ export class Admin implements OnInit {
       parkingSpots: 0,
       thumbnailUrl: '',
       isFeatured: false,
-      features: [] as string[],
-    };
-  }
-
-  openAddForm() {
-    this.form = this.emptyForm();
+    });
+    this.features = [];
     this.editingId = null;
     this.formMode = 'add';
     this.formError = '';
@@ -170,7 +193,7 @@ export class Admin implements OnInit {
   }
 
   openEditForm(property: Property) {
-    this.form = {
+    this.propertyForm.reset({
       title: property.title,
       description: property.description,
       price: property.price,
@@ -189,8 +212,8 @@ export class Admin implements OnInit {
       parkingSpots: property.parkingSpots,
       thumbnailUrl: property.thumbnailUrl,
       isFeatured: property.isFeatured,
-      features: [...(property.features || [])],
-    };
+    });
+    this.features = [...(property.features || [])];
     this.editingId = property.id ?? null;
     this.formMode = 'edit';
     this.formError = '';
@@ -208,17 +231,18 @@ export class Admin implements OnInit {
   }
 
   toggleFeature(feature: string) {
-    const idx = this.form.features.indexOf(feature);
-    if (idx > -1) this.form.features.splice(idx, 1);
-    else this.form.features.push(feature);
+    const idx = this.features.indexOf(feature);
+    if (idx > -1) this.features.splice(idx, 1);
+    else this.features.push(feature);
   }
 
   hasFeature(feature: string): boolean {
-    return this.form.features.includes(feature);
+    return this.features.includes(feature);
   }
 
   async saveProperty() {
-    if (!this.form.title || !this.form.price || !this.form.area) {
+    if (this.propertyForm.invalid) {
+      this.propertyForm.markAllAsTouched();
       this.formError = 'Title, price and area are required.';
       return;
     }
@@ -227,17 +251,19 @@ export class Admin implements OnInit {
     this.formError = '';
 
     const existingProp = this.properties.find((p) => p.id === this.editingId);
+    const formValue = this.propertyForm.getRawValue();
 
     const data = {
-      ...this.form,
-      price: Number(this.form.price),
-      bedrooms: Number(this.form.bedrooms),
-      bathrooms: Number(this.form.bathrooms),
-      area: Number(this.form.area),
-      floor: Number(this.form.floor),
-      totalFloors: Number(this.form.totalFloors),
-      yearBuilt: Number(this.form.yearBuilt),
-      parkingSpots: Number(this.form.parkingSpots),
+      ...formValue,
+      features: this.features,
+      price: Number(formValue.price),
+      bedrooms: Number(formValue.bedrooms),
+      bathrooms: Number(formValue.bathrooms),
+      area: Number(formValue.area),
+      floor: Number(formValue.floor),
+      totalFloors: Number(formValue.totalFloors),
+      yearBuilt: Number(formValue.yearBuilt),
+      parkingSpots: Number(formValue.parkingSpots),
       images: [] as string[],
       coordinates: { lat: 41.6938, lng: 44.8015 },
       agentId: this.authService.getCurrentUser()?.uid ?? '',
@@ -257,6 +283,7 @@ export class Admin implements OnInit {
         await this.propertyService.updateProperty(this.editingId, data);
         this.formSuccess = 'Property updated successfully!';
       }
+      this.toast.success(this.formSuccess);
       this.formMode = null;
       this.editingId = null;
       // Reload the list so the new/updated item appears immediately
@@ -264,6 +291,7 @@ export class Admin implements OnInit {
       setTimeout(() => (this.formSuccess = ''), 3000);
     } catch (e) {
       this.formError = 'Failed to save property. Please try again.';
+      this.toast.error(this.formError);
     } finally {
       this.formSaving = false;
     }
@@ -284,9 +312,11 @@ export class Admin implements OnInit {
       // Remove locally for instant feedback, then reload to sync
       this.properties = this.properties.filter(p => p.id !== id);
       this.formSuccess = 'Property deleted.';
+      this.toast.success(this.formSuccess);
       setTimeout(() => (this.formSuccess = ''), 3000);
     } catch (e) {
       this.formError = 'Failed to delete property.';
+      this.toast.error(this.formError);
     }
   }
 

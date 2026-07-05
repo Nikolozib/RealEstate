@@ -1,60 +1,117 @@
-# RealEstate
+# RealEstate Georgia
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.9.
+A real estate listings platform for Georgia (Tbilisi, Batumi, and beyond) — browse, search, and save
+properties, contact agents, and manage listings from an admin panel. Built with Angular (standalone
+components, signals-friendly, zoneless) and Firebase (Auth, Firestore).
 
-## Development server
+[![Netlify Status](https://api.netlify.com/api/v1/badges/d790dce9-40a0-417e-8adf-3c2a324731b4/deploy-status)](https://app.netlify.com/projects/realsang/deploys)
 
-To start a local development server, run:
+## Stack
 
-```bash
-ng serve
-```
+- **Angular 21** — standalone components, lazy-loaded routes, SSR (`@angular/ssr`) with hydration
+- **Firebase** — Authentication (email/password + verification), Firestore (properties, users, inquiries)
+- **Vitest** — unit tests via `@angular/build:unit-test`
+- **AOS** — scroll animations
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Getting started
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+### 1. Install dependencies
 
 ```bash
-ng generate --help
+npm install
 ```
+
+### 2. Configure Firebase
+
+The app expects a Firebase project with **Authentication** (Email/Password provider) and
+**Firestore** enabled. Firebase web config lives in:
+
+- `src/app/environment/environment.ts` — development
+- `src/app/environment/environment.prod.ts` — production build (swapped in via `angular.json`
+  `fileReplacements`)
+
+Both also set `siteUrl`, used to build canonical URLs and structured data — update it if you deploy
+to a different domain.
+
+Firebase config values (`apiKey`, `authDomain`, etc.) are public client identifiers, not secrets —
+safe to commit. Get them from **Firebase Console → Project Settings → General → Your apps**.
+
+### 3. Deploy Firestore/Storage security rules
+
+Rules live in `firestore.rules` and `storage.rules` at the repo root, referenced by `firebase.json`.
+Deploy them with the [Firebase CLI](https://firebase.google.com/docs/cli):
+
+```bash
+npm install -g firebase-tools
+firebase login
+firebase use --add        # select this project once
+firebase deploy --only firestore:rules,storage:rules
+```
+
+### 4. Run the dev server
+
+```bash
+npm start
+```
+
+Visit `http://localhost:4200/`. The app reloads automatically on file changes.
 
 ## Building
 
-To build the project run:
-
 ```bash
-ng build
+npm run build
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Outputs to `dist/RealEstate/`:
+- `dist/RealEstate/browser` — static client bundle
+- `dist/RealEstate/server` — SSR server bundle (`server.mjs`)
 
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
+To run the SSR server locally against a production build:
 
 ```bash
-ng e2e
+npm run build
+node dist/RealEstate/server/server.mjs
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+Serves on `http://localhost:4000` by default (override with `PORT`).
+
+## Testing
+
+```bash
+npm test
+```
+
+Runs the Vitest-based unit test suite (components, guards, services, validators, pagination
+helpers). Component specs that touch Firebase-backed services initialize a real (but offline)
+Firebase app via `src/app/core/testing/test-providers.ts` — no emulator required for the current
+suite, but note that a few specs (e.g. `listings`, `home`) call live Firestore reads.
+
+## Deployment (Netlify)
+
+This project deploys to Netlify with SSR enabled via the `@netlify/angular-runtime` build plugin
+(see `netlify.toml`). Netlify runs `npm run build` and serves both the static `browser` output and
+the SSR bundle automatically.
+
+If you fork this repo and connect your own Netlify site, verify in the Netlify dashboard that:
+- The build command is `npm run build` and publish directory is `dist/RealEstate/browser`.
+- The `@netlify/angular-runtime` plugin is installed (Netlify offers to add it automatically when
+  it detects `@angular/ssr` in `package.json`).
+
+## Project structure
+
+```
+src/app/
+  Components/        Feature + shared UI components (pages, header/footer, toast)
+  core/
+    guards/           authGuard, adminGuard, guestGuard, property resolver
+    interceptors/      Auth token attach + global HTTP error toast
+    services/          Firebase-backed services (Auth, User, Property, Inquiry, Seo, Toast)
+    utils/              Validation, reactive form validators, pagination helpers
+    testing/            Shared TestBed providers for specs
+  environment/         Firebase config per build configuration
+```
 
 ## Additional Resources
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
-[![Netlify Status](https://api.netlify.com/api/v1/badges/d790dce9-40a0-417e-8adf-3c2a324731b4/deploy-status)](https://app.netlify.com/projects/realsang/deploys)
+- [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli)
+- [AngularFire documentation](https://github.com/angular/angularfire)

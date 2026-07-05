@@ -1,4 +1,5 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser, NgOptimizedImage } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { take } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
@@ -19,7 +20,7 @@ import * as AOS from 'aos';
 @Component({
   selector: 'app-favorites',
   standalone: true,
-  imports: [RouterLink, Pagination],
+  imports: [RouterLink, Pagination, NgOptimizedImage],
   templateUrl: './favorites.html',
   styleUrl: './favorites.scss'
 })
@@ -32,6 +33,8 @@ export class Favorites implements OnInit {
   currentPage = 1;
   totalPages = 1;
   readonly pageSize = PAGE_SIZE;
+
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   constructor(
     private authService: AuthService,
@@ -46,7 +49,8 @@ export class Favorites implements OnInit {
       'Saved Properties | RealEstate Georgia',
       'Your saved and favorite property listings.'
     );
-    AOS.init({ duration: 700, easing: 'ease-in-out', once: true, offset: 40 });
+    this.seo.setCanonicalUrl('/favorites');
+    if (this.isBrowser) AOS.init({ duration: 700, easing: 'ease-in-out', once: true, offset: 40 });
 
     this.authService.currentUser$.pipe(take(1)).subscribe(currentUser => {
       if (!currentUser) {
@@ -77,7 +81,7 @@ export class Favorites implements OnInit {
         userData.savedProperties
       );
       this.updatePagination();
-      setTimeout(() => AOS.refresh(), 50);
+      if (this.isBrowser) setTimeout(() => AOS.refresh(), 50);
     } catch (e) {
       console.error('Failed to load saved properties:', e);
       this.loadError = true;
@@ -106,8 +110,10 @@ export class Favorites implements OnInit {
       this.currentPage,
       this.pageSize
     );
-    setTimeout(() => AOS.refresh(), 50);
-    document.querySelector('.favorites-main')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (this.isBrowser) {
+      setTimeout(() => AOS.refresh(), 50);
+      document.querySelector('.favorites-main')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   async unsave(propertyId: string) {

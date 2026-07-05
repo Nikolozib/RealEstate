@@ -52,103 +52,103 @@
             </div>
           }
 
-          <div class="form-group">
-            <label class="form-label">Full Name <span class="form-required">*</span></label>
-            <div class="form-input-wrap">
-              <i class="fa-solid fa-user form-input-icon"></i>
-              <input type="text" class="form-input" placeholder="Your full name" [(ngModel)]="displayName" (keyup.enter)="register()" />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Email Address <span class="form-required">*</span></label>
-            <div class="form-input-wrap">
-              <i class="fa-solid fa-envelope form-input-icon"></i>
-              <input type="email" class="form-input" placeholder="your@email.com" [(ngModel)]="email" (keyup.enter)="register()" />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Phone Number</label>
-            <div class="form-input-wrap">
-              <i class="fa-solid fa-phone form-input-icon"></i>
-              <input type="tel" class="form-input" placeholder="+995 555 000 000" [(ngModel)]="phone" (keyup.enter)="register()" />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Password <span class="form-required">*</span></label>
-            <div class="form-input-wrap">
-              <i class="fa-solid fa-lock form-input-icon"></i>
-              <input
-                [type]="showPassword ? 'text' : 'password'"
-                class="form-input"
-                placeholder="Min. 6 characters"
-                [(ngModel)]="password"
-                (keyup.enter)="register()"
-              />
-              <button class="form-input-toggle" (click)="togglePassword()" type="button">
-                <i [class]="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
-              </button>
-            </div>
-            @if (password) {
-              <div class="password-strength">
-                <div class="password-strength__bars">
-                  <div class="password-strength__bar"
-                    [class.active]="getPasswordStrength().level >= 1"
-                    [class.weak]="getPasswordStrength().level === 1"></div>
-                  <div class="password-strength__bar"
-                    [class.active]="getPasswordStrength().level >= 2"
-                    [class.fair]="getPasswordStrength().level === 2"></div>
-                  <div class="password-strength__bar"
-                    [class.active]="getPasswordStrength().level >= 3"
-                    [class.strong]="getPasswordStrength().level === 3"></div>
-                </div>
-                <span class="password-strength__label"
-                  [class.weak]="getPasswordStrength().level === 1"
-                  [class.fair]="getPasswordStrength().level === 2"
-                  [class.strong]="getPasswordStrength().level === 3">
-                  {{ getPasswordStrength().label }}
-                </span>
+          <form [formGroup]="registerForm" (ngSubmit)="register()">
+            <div class="form-group">
+              <label class="form-label">Full Name <span class="form-required">*</span></label>
+              <div class="form-input-wrap">
+                <i class="fa-solid fa-user form-input-icon"></i>
+                <input type="text" class="form-input" placeholder="Your full name" formControlName="displayName" />
               </div>
-            }
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Confirm Password <span class="form-required">*</span></label>
-            <div class="form-input-wrap">
-              <i class="fa-solid fa-lock form-input-icon"></i>
-              <input
-                [type]="showConfirm ? 'text' : 'password'"
-                class="form-input"
-                [class.mismatch]="confirmPassword && confirmPassword !== password"
-                placeholder="Repeat your password"
-                [(ngModel)]="confirmPassword"
-                (keyup.enter)="register()"
-              />
-              <button class="form-input-toggle" (click)="toggleConfirm()" type="button">
-                <i [class]="showConfirm ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
-              </button>
             </div>
-            @if (confirmPassword && confirmPassword !== password) {
-              <span class="form-hint error">
-                <i class="fa-solid fa-xmark"></i> Passwords do not match
-              </span>
-            }
-            @if (confirmPassword && confirmPassword === password) {
-              <span class="form-hint success">
-                <i class="fa-solid fa-check"></i> Passwords match
-              </span>
-            }
-          </div>
 
-          <button class="btn btn--primary btn--full" (click)="register()" [disabled]="loading">
-            @if (loading) {
-              <i class="fa-solid fa-spinner fa-spin"></i> Creating account...
-            } @else {
-              Create Account <i class="fa-solid fa-arrow-right"></i>
-            }
-          </button>
+            <div class="form-group">
+              <label class="form-label">Email Address <span class="form-required">*</span></label>
+              <div class="form-input-wrap">
+                <i class="fa-solid fa-envelope form-input-icon"></i>
+                <input type="email" class="form-input" placeholder="your@email.com" formControlName="email" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Phone Number</label>
+              <div class="form-input-wrap">
+                <i class="fa-solid fa-phone form-input-icon"></i>
+                <input type="tel" class="form-input" placeholder="+995 555 000 000" formControlName="phone" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Password <span class="form-required">*</span></label>
+              <div class="form-input-wrap">
+                <i class="fa-solid fa-lock form-input-icon"></i>
+                <input
+                  [type]="showPassword ? 'text' : 'password'"
+                  class="form-input"
+                  placeholder="Min. 6 characters"
+                  formControlName="password"
+                />
+                <button class="form-input-toggle" (click)="togglePassword()" type="button">
+                  <i [class]="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+                </button>
+              </div>
+              @if (registerForm.value.password) {
+                <div class="password-strength">
+                  <div class="password-strength__bars">
+                    <div class="password-strength__bar"
+                      [class.active]="getPasswordStrength().level >= 1"
+                      [class.weak]="getPasswordStrength().level === 1"></div>
+                    <div class="password-strength__bar"
+                      [class.active]="getPasswordStrength().level >= 2"
+                      [class.fair]="getPasswordStrength().level === 2"></div>
+                    <div class="password-strength__bar"
+                      [class.active]="getPasswordStrength().level >= 3"
+                      [class.strong]="getPasswordStrength().level === 3"></div>
+                  </div>
+                  <span class="password-strength__label"
+                    [class.weak]="getPasswordStrength().level === 1"
+                    [class.fair]="getPasswordStrength().level === 2"
+                    [class.strong]="getPasswordStrength().level === 3">
+                    {{ getPasswordStrength().label }}
+                  </span>
+                </div>
+              }
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Confirm Password <span class="form-required">*</span></label>
+              <div class="form-input-wrap">
+                <i class="fa-solid fa-lock form-input-icon"></i>
+                <input
+                  [type]="showConfirm ? 'text' : 'password'"
+                  class="form-input"
+                  [class.mismatch]="passwordsMismatch"
+                  placeholder="Repeat your password"
+                  formControlName="confirmPassword"
+                />
+                <button class="form-input-toggle" (click)="toggleConfirm()" type="button">
+                  <i [class]="showConfirm ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+                </button>
+              </div>
+              @if (passwordsMismatch) {
+                <span class="form-hint error">
+                  <i class="fa-solid fa-xmark"></i> Passwords do not match
+                </span>
+              }
+              @if (registerForm.value.confirmPassword && !passwordsMismatch) {
+                <span class="form-hint success">
+                  <i class="fa-solid fa-check"></i> Passwords match
+                </span>
+              }
+            </div>
+
+            <button type="submit" class="btn btn--primary btn--full" [disabled]="loading">
+              @if (loading) {
+                <i class="fa-solid fa-spinner fa-spin"></i> Creating account...
+              } @else {
+                Create Account <i class="fa-solid fa-arrow-right"></i>
+              }
+            </button>
+          </form>
 
           <p class="auth-card__terms">
             By creating an account you agree to our

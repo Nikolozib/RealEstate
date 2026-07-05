@@ -27,7 +27,7 @@
 <section class="about-story">
   <div class="about-story__container">
     <div class="about-story__img" data-aos="fade-right">
-      <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&q=80" alt="Our office" />
+      <img ngSrc="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&q=80" width="800" height="480" alt="Our office" />
     </div>
     <div class="about-story__text" data-aos="fade-left">
       <span class="section-label">Our story</span>
@@ -75,7 +75,7 @@
       @for (member of team; track member.name; let i = $index) {
         <div class="team-card" data-aos="fade-up" [attr.data-aos-delay]="i * 120">
           <div class="team-card__img-wrap">
-            <img [src]="member.avatar" [alt]="member.name" class="team-card__img" />
+            <img [ngSrc]="member.avatar" [alt]="member.name" width="200" height="200" class="team-card__img" />
           </div>
           <div class="team-card__body">
             <h3 class="team-card__name">{{ member.name }}</h3>

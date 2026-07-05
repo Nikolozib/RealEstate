@@ -1,4 +1,5 @@
-import { Component, OnInit, ChangeDetectorRef, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ElementRef, ViewChild, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser, NgOptimizedImage } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { take } from 'rxjs/operators';
@@ -7,6 +8,7 @@ import { InquiryService } from '../../core/services/inquiry';
 import { AuthService } from '../../core/services/auth';
 import { UserService } from '../../core/services/user';
 import { SeoService } from '../../core/services/seo';
+import { ToastService } from '../../core/services/toast';
 import { Property } from '../../core/services/models/property.model';
 import {
   isValidEmail,
@@ -19,7 +21,7 @@ import * as AOS from 'aos';
 @Component({
   selector: 'app-property-detail',
   standalone: true,
-  imports: [RouterLink, FormsModule],
+  imports: [RouterLink, FormsModule, NgOptimizedImage],
   templateUrl: './property-detail.html',
   styleUrl: './property-detail.scss'
 })
@@ -52,11 +54,14 @@ export class PropertyDetail implements OnInit {
     private authService: AuthService,
     private userService: UserService,
     private seo: SeoService,
+    private toast: ToastService,
     private cdr: ChangeDetectorRef
   ) {}
 
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
   ngOnInit() {
-    AOS.init({ duration: 700, easing: 'ease-in-out', once: true, offset: 40 });
+    if (this.isBrowser) AOS.init({ duration: 700, easing: 'ease-in-out', once: true, offset: 40 });
 
     this.authService.currentUser$.subscribe(u => {
       this.isLoggedIn = !!u && u.emailVerified;
@@ -73,32 +78,32 @@ export class PropertyDetail implements OnInit {
     });
 
     const id = this.route.snapshot.paramMap.get('id');
-    if (!id) { this.notFound = true; this.loading = false; return; }
+    const prop = this.route.snapshot.data['property'] as Property | null;
 
-    this.propertyService.getPropertyById(id).subscribe({
-      next: (prop) => {
-        if (!prop) {
-          this.notFound = true;
-          this.loading = false;
-          this.cdr.detectChanges();
-          return;
-        }
-        this.property = prop;
-        this.activeImage = prop.thumbnailUrl;
-        this.loading = false;
-        this.propertyService.incrementViews(id);
-        this.seo.setPageMeta(
-          `${prop.title} | RealEstate Georgia`,
-          `${prop.propertyType} in ${prop.district}, ${prop.city}. ${prop.bedrooms} beds, ${prop.area}m².`
-        );
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.notFound = true;
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    });
+    if (!id || !prop) {
+      this.notFound = true;
+      this.loading = false;
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.property = prop;
+    this.activeImage = prop.thumbnailUrl;
+    this.loading = false;
+    if (this.isBrowser) this.propertyService.incrementViews(id);
+
+    this.seo.setPageMeta(
+      `${prop.title} | RealEstate Georgia`,
+      `${prop.propertyType} in ${prop.district}, ${prop.city}. ${prop.bedrooms} beds, ${prop.area}m².`
+    );
+    this.seo.setCanonicalUrl(`/listings/${id}`);
+    this.seo.setPropertyStructuredData(prop, id);
+    this.seo.setBreadcrumbs([
+      { name: 'Home', path: '/' },
+      { name: 'Listings', path: '/listings' },
+      { name: prop.title, path: `/listings/${id}` },
+    ]);
+    this.cdr.detectChanges();
   }
 
   setActiveImage(url: string) {
@@ -127,9 +132,11 @@ export class PropertyDetail implements OnInit {
     if (this.isSaved) {
       this.userService.unsaveProperty(this.currentUserId, this.property.id);
       this.isSaved = false;
+      this.toast.info('Removed from saved properties.');
     } else {
       this.userService.saveProperty(this.currentUserId, this.property.id);
       this.isSaved = true;
+      this.toast.success('Saved to your favorites.');
     }
   }
 
@@ -181,6 +188,7 @@ export class PropertyDetail implements OnInit {
         agentId: this.property.agentId ?? ''
       });
       this.inquirySent = true;
+      this.toast.success('Inquiry sent! The agent will contact you soon.');
       this.inquiryName = '';
       this.inquiryEmail = '';
       this.inquiryPhone = '';
@@ -194,6 +202,7 @@ export class PropertyDetail implements OnInit {
       this.inquirySuccessBox?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
     } catch (e) {
       this.inquiryError = 'Something went wrong. Please try again.';
+      this.toast.error(this.inquiryError);
     } finally {
       this.inquirySending = false;
       this.cdr.detectChanges();

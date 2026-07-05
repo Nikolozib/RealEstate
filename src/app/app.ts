@@ -1,26 +1,28 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
-import { Router, NavigationEnd } from '@angular/router';
-import { filter } from 'rxjs/operators';
 import { Header } from './Components/shared/header/header';
 import { Footer } from './Components/shared/footer/footer';
+import { ToastContainer } from './Components/shared/toast/toast';
+import { SeoService } from './core/services/seo';
 import * as AOS from 'aos';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, Header, Footer],
+  imports: [RouterOutlet, Header, Footer, ToastContainer],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
 export class AppComponent implements OnInit {
-  constructor(private router: Router) {
-    this.router.events.pipe(
-      filter(e => e instanceof NavigationEnd)
-    ).subscribe(() => window.scrollTo(0, 0));
-  }
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
+  constructor(private seo: SeoService) {}
 
   ngOnInit() {
+    this.seo.setOrganizationData();
+
+    if (!this.isBrowser) return;
     AOS.init({
       duration: 800,
       easing: 'ease-in-out',

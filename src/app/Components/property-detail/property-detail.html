@@ -41,7 +41,9 @@
         <!-- GALLERY -->
         <div class="detail__gallery" data-aos="fade-up">
           <div class="detail__gallery-main" (click)="openLightbox(activeImage)">
-            <img [src]="activeImage" [alt]="property.title" class="detail__gallery-img" />
+            @if (activeImage) {
+              <img [ngSrc]="activeImage" [alt]="property.title" class="detail__gallery-img" fill priority />
+            }
             <div class="detail__gallery-zoom">
               <i class="fa-solid fa-magnifying-glass-plus"></i>
             </div>
@@ -57,7 +59,7 @@
                   class="detail__gallery-thumb"
                   [class.active]="img === activeImage"
                   (click)="setActiveImage(img)">
-                  <img [src]="img" alt="thumbnail" />
+                  <img [ngSrc]="img" alt="thumbnail" width="80" height="60" />
                 </div>
               }
             </div>

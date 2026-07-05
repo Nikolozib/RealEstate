@@ -1,4 +1,5 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser, NgOptimizedImage } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { PropertyService } from '../../core/services/property';
@@ -16,7 +17,7 @@ import * as AOS from 'aos';
 @Component({
   selector: 'app-listings',
   standalone: true,
-  imports: [RouterLink, FormsModule, Pagination],
+  imports: [RouterLink, FormsModule, Pagination, NgOptimizedImage],
   templateUrl: './listings.html',
   styleUrl: './listings.scss'
 })
@@ -86,6 +87,8 @@ export class Listings implements OnInit {
     { value: 'area_desc', label: 'Largest First' }
   ];
 
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
   constructor(
     private propertyService: PropertyService,
     private seo: SeoService,
@@ -98,6 +101,11 @@ export class Listings implements OnInit {
       'Properties | RealEstate Georgia',
       'Browse all apartments, houses, villas and land for sale and rent in Georgia.'
     );
+    this.seo.setCanonicalUrl('/listings');
+    this.seo.setBreadcrumbs([
+      { name: 'Home', path: '/' },
+      { name: 'Listings', path: '/listings' },
+    ]);
 
     this.route.queryParams.subscribe(params => {
       if (params['type']) this.selectedPropertyType = params['type'];
@@ -105,7 +113,7 @@ export class Listings implements OnInit {
     });
 
     this.loadProperties();
-    AOS.init({ duration: 700, easing: 'ease-in-out', once: true, offset: 40 });
+    if (this.isBrowser) AOS.init({ duration: 700, easing: 'ease-in-out', once: true, offset: 40 });
   }
 
   private getFirestoreFilters() {
@@ -127,7 +135,7 @@ export class Listings implements OnInit {
         this.getFirestoreFilters()
       );
       this.applyFilters();
-      setTimeout(() => AOS.refresh(), 50);
+      if (this.isBrowser) setTimeout(() => AOS.refresh(), 50);
     } catch (err) {
       console.error('Failed to load properties:', err);
       this.loadError = true;
@@ -192,8 +200,10 @@ export class Listings implements OnInit {
       this.currentPage,
       this.pageSize
     );
-    setTimeout(() => AOS.refresh(), 50);
-    document.querySelector('.listings-main')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (this.isBrowser) {
+      setTimeout(() => AOS.refresh(), 50);
+      document.querySelector('.listings-main')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   countActiveFilters() {

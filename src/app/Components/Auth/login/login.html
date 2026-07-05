@@ -50,50 +50,50 @@
             </div>
           }
 
-          <div class="form-group">
-            <label class="form-label">Email Address</label>
-            <div class="form-input-wrap">
-              <i class="fa-solid fa-envelope form-input-icon"></i>
-              <input
-                type="email"
-                class="form-input"
-                placeholder="your@email.com"
-                [(ngModel)]="email"
-                (keyup.enter)="login()"
-              />
+          <form [formGroup]="loginForm" (ngSubmit)="login()">
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <div class="form-input-wrap">
+                <i class="fa-solid fa-envelope form-input-icon"></i>
+                <input
+                  type="email"
+                  class="form-input"
+                  placeholder="your@email.com"
+                  formControlName="email"
+                />
+              </div>
             </div>
-          </div>
 
-          <div class="form-group">
-            <div class="form-label-row">
-              <label class="form-label">Password</label>
-              <button type="button" class="form-forgot" (click)="showForgotPassword()">Forgot password?</button>
+            <div class="form-group">
+              <div class="form-label-row">
+                <label class="form-label">Password</label>
+                <button type="button" class="form-forgot" (click)="showForgotPassword()">Forgot password?</button>
+              </div>
+              <div class="form-input-wrap">
+                <i class="fa-solid fa-lock form-input-icon"></i>
+                <input
+                  [type]="showPassword ? 'text' : 'password'"
+                  class="form-input"
+                  placeholder="Enter your password"
+                  formControlName="password"
+                />
+                <button class="form-input-toggle" (click)="togglePassword()" type="button">
+                  <i [class]="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+                </button>
+              </div>
             </div>
-            <div class="form-input-wrap">
-              <i class="fa-solid fa-lock form-input-icon"></i>
-              <input
-                [type]="showPassword ? 'text' : 'password'"
-                class="form-input"
-                placeholder="Enter your password"
-                [(ngModel)]="password"
-                (keyup.enter)="login()"
-              />
-              <button class="form-input-toggle" (click)="togglePassword()" type="button">
-                <i [class]="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
-              </button>
-            </div>
-          </div>
 
-          <button
-            class="btn btn--primary btn--full"
-            (click)="login()"
-            [disabled]="loading">
-            @if (loading) {
-              <i class="fa-solid fa-spinner fa-spin"></i> Signing in...
-            } @else {
-              Sign In <i class="fa-solid fa-arrow-right"></i>
-            }
-          </button>
+            <button
+              type="submit"
+              class="btn btn--primary btn--full"
+              [disabled]="loading">
+              @if (loading) {
+                <i class="fa-solid fa-spinner fa-spin"></i> Signing in...
+              } @else {
+                Sign In <i class="fa-solid fa-arrow-right"></i>
+              }
+            </button>
+          </form>
 
           <p class="auth-card__switch">
             Don't have an account?
@@ -123,30 +123,31 @@
               </div>
             }
 
-            <div class="form-group">
-              <label class="form-label">Email Address</label>
-              <div class="form-input-wrap">
-                <i class="fa-solid fa-envelope form-input-icon"></i>
-                <input
-                  type="email"
-                  class="form-input"
-                  placeholder="your@email.com"
-                  [(ngModel)]="resetEmail"
-                  (keyup.enter)="sendResetEmail()"
-                />
+            <form [formGroup]="resetForm" (ngSubmit)="sendResetEmail()">
+              <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <div class="form-input-wrap">
+                  <i class="fa-solid fa-envelope form-input-icon"></i>
+                  <input
+                    type="email"
+                    class="form-input"
+                    placeholder="your@email.com"
+                    formControlName="resetEmail"
+                  />
+                </div>
               </div>
-            </div>
 
-            <button
-              class="btn btn--primary btn--full"
-              (click)="sendResetEmail()"
-              [disabled]="resetSending">
-              @if (resetSending) {
-                <i class="fa-solid fa-spinner fa-spin"></i> Sending...
-              } @else {
-                <i class="fa-solid fa-paper-plane"></i> Send Reset Link
-              }
-            </button>
+              <button
+                type="submit"
+                class="btn btn--primary btn--full"
+                [disabled]="resetSending">
+                @if (resetSending) {
+                  <i class="fa-solid fa-spinner fa-spin"></i> Sending...
+                } @else {
+                  <i class="fa-solid fa-paper-plane"></i> Send Reset Link
+                }
+              </button>
+            </form>
 
           } @else {
             <div class="auth-card__success">

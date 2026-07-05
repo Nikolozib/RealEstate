@@ -1,5 +1,6 @@
 export const environment = {
   production: false,
+  siteUrl: 'http://localhost:4200',
   firebase: {
     apiKey: 'AIzaSyAnMZlkNfLQHzBwWEy74VwclXBmsQr99FM',
     authDomain: 'real-estate-app-9f947.firebaseapp.com',

@@ -1,28 +1,26 @@
-import { ChangeDetectorRef, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnDestroy, ViewChild, inject } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth';
 import { UserService } from '../../../core/services/user';
 import {
-  isValidEmail,
-  isValidName,
-  isValidPassword,
-  isValidPhone,
-} from '../../../core/utils/validation';
+  emailValidator,
+  nameValidator,
+  passwordValidator,
+  passwordsMatchValidator,
+  phoneValidator,
+} from '../../../core/utils/form-validators';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [RouterLink, FormsModule],
+  imports: [RouterLink, ReactiveFormsModule],
   templateUrl: './register.html',
   styleUrl: './register.scss',
 })
 export class Register implements OnDestroy {
-  displayName = '';
-  email = '';
-  password = '';
-  confirmPassword = '';
-  phone = '';
+  private fb = inject(FormBuilder);
+
   loading = false;
   error = '';
   showPassword = false;
@@ -38,6 +36,17 @@ export class Register implements OnDestroy {
 
   @ViewChild('verifyCard') verifyCard?: ElementRef<HTMLElement>;
 
+  registerForm = this.fb.group(
+    {
+      displayName: ['', [Validators.required, nameValidator()]],
+      email: ['', [Validators.required, emailValidator()]],
+      phone: ['', [phoneValidator(false)]],
+      password: ['', [Validators.required, passwordValidator(6)]],
+      confirmPassword: ['', [Validators.required]],
+    },
+    { validators: passwordsMatchValidator('password', 'confirmPassword') },
+  );
+
   constructor(
     private authService: AuthService,
     private userService: UserService,
@@ -45,50 +54,33 @@ export class Register implements OnDestroy {
     private cdr: ChangeDetectorRef,
   ) {}
 
+  get passwordsMismatch(): boolean {
+    const confirm = this.registerForm.controls.confirmPassword;
+    return !!confirm.value && this.registerForm.hasError('passwordMismatch');
+  }
+
   async register() {
-    if (!this.displayName || !this.email || !this.password || !this.confirmPassword) {
-      this.error = 'Please fill in all required fields.';
+    if (this.registerForm.invalid) {
+      this.registerForm.markAllAsTouched();
+      this.error = this.getFormErrorMessage();
       this.cdr.detectChanges();
       return;
     }
-    if (!isValidName(this.displayName)) {
-      this.error = 'Please enter a valid name (letters only, at least 2 characters).';
-      this.cdr.detectChanges();
-      return;
-    }
-    if (!isValidEmail(this.email)) {
-      this.error = 'Please enter a valid email address.';
-      this.cdr.detectChanges();
-      return;
-    }
-    if (this.phone.trim() && !isValidPhone(this.phone)) {
-      this.error = 'Please enter a valid phone number (digits only, 7–15 digits).';
-      this.cdr.detectChanges();
-      return;
-    }
-    if (!isValidPassword(this.password)) {
-      this.error = 'Password must be at least 6 characters.';
-      this.cdr.detectChanges();
-      return;
-    }
-    if (this.password !== this.confirmPassword) {
-      this.error = 'Passwords do not match.';
-      this.cdr.detectChanges();
-      return;
-    }
+
+    const { displayName, email, phone, password } = this.registerForm.getRawValue();
 
     this.loading = true;
     this.error = '';
     this.cdr.detectChanges();
 
     try {
-      const cred = await this.authService.register(this.email, this.password);
+      const cred = await this.authService.register(email!, password!);
 
       try {
         await this.userService.createUser(cred.user.uid, {
-          displayName: this.displayName,
-          email: this.email,
-          phone: this.phone,
+          displayName: displayName!,
+          email: email!,
+          phone: phone ?? '',
           photoURL: '',
         });
       } catch (firestoreError) {
@@ -99,7 +91,7 @@ export class Register implements OnDestroy {
 
       await this.authService.sendVerificationEmail(cred.user);
 
-      this.registeredEmail = this.email;
+      this.registeredEmail = email!;
       this.registrationComplete = true;
       this.scrollToVerifyCard();
 
@@ -124,14 +116,43 @@ export class Register implements OnDestroy {
     }
   }
 
+  private getFormErrorMessage(): string {
+    const { displayName, email, phone, password, confirmPassword } = this.registerForm.controls;
+    if (
+      displayName.hasError('required') ||
+      email.hasError('required') ||
+      password.hasError('required') ||
+      confirmPassword.hasError('required')
+    ) {
+      return 'Please fill in all required fields.';
+    }
+    if (displayName.hasError('invalidName')) {
+      return 'Please enter a valid name (letters only, at least 2 characters).';
+    }
+    if (email.hasError('invalidEmail')) {
+      return 'Please enter a valid email address.';
+    }
+    if (phone.hasError('invalidPhone')) {
+      return 'Please enter a valid phone number (digits only, 7–15 digits).';
+    }
+    if (password.hasError('invalidPassword')) {
+      return 'Password must be at least 6 characters.';
+    }
+    if (this.registerForm.hasError('passwordMismatch')) {
+      return 'Passwords do not match.';
+    }
+    return 'Please check the form and try again.';
+  }
+
   // Firebase never lets you "re-register" an email, even if the original
   // signup was abandoned before verification — that would otherwise strand
   // the email forever. If these credentials belong to that same unverified
   // account, sign in, resend the link, and drop them back on the waiting
   // screen instead of a dead-end error.
   private async resumeIfUnverified() {
+    const { email, password } = this.registerForm.getRawValue();
     try {
-      const cred = await this.authService.login(this.email, this.password);
+      const cred = await this.authService.login(email!, password!);
 
       if (cred.user.emailVerified) {
         await this.authService.logout();
@@ -140,7 +161,7 @@ export class Register implements OnDestroy {
       }
 
       await this.authService.sendVerificationEmail(cred.user);
-      this.registeredEmail = this.email;
+      this.registeredEmail = email!;
       this.registrationComplete = true;
       this.scrollToVerifyCard();
       this.startPolling();
@@ -217,7 +238,7 @@ export class Register implements OnDestroy {
   }
 
   getPasswordStrength(): { label: string; level: number } {
-    const p = this.password;
+    const p = this.registerForm.controls.password.value ?? '';
     if (!p) return { label: '', level: 0 };
     let score = 0;
     if (p.length >= 6) score++;
