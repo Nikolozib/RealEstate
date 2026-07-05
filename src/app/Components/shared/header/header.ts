@@ -15,7 +15,9 @@ export class Header implements OnInit {
   isScrolled = false;
   isVisible = false;
   isMenuOpen = false;
-  isLoggedIn = false;
+  // Only true once the session is email-verified — an unverified Firebase
+  // session must render as logged-out here (see AuthService.isVerified$).
+  isVerified = false;
   isAdmin = false;
 
   private readonly scrollThreshold = 50;
@@ -29,8 +31,8 @@ export class Header implements OnInit {
   ngOnInit() {
     this.updateScrollState();
 
-    this.authService.isLoggedIn$.subscribe(status => {
-      this.isLoggedIn = status;
+    this.authService.isVerified$.subscribe(status => {
+      this.isVerified = status;
 
       if (status) {
         const user = this.authService.getCurrentUser();

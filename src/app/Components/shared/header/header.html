@@ -32,7 +32,7 @@
         </a>
       }
 
-      @if (!isLoggedIn) {
+      @if (!isVerified) {
         <div class="header__nav-auth">
           <a routerLink="/auth/login" class="header__btn header__btn--ghost" (click)="closeMenu()"
             >Sign In</a
@@ -46,7 +46,7 @@
         </div>
       }
 
-      @if (isLoggedIn) {
+      @if (isVerified) {
         <div class="header__nav-auth">
           <a routerLink="/favorites" class="header__link" (click)="closeMenu()">
             <i class="fa-regular fa-heart"></i> Saved

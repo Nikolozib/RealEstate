@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { InquiryService } from '../../core/services/inquiry';
 import { SeoService } from '../../core/services/seo';
@@ -26,6 +26,8 @@ export class Contact implements OnInit {
   sending = false;
   sent = false;
   error = '';
+
+  @ViewChild('successBox') successBox?: ElementRef<HTMLElement>;
 
   contactInfo = [
     {
@@ -107,6 +109,10 @@ export class Contact implements OnInit {
       this.phone = '';
       this.subject = '';
       this.message = '';
+      // The success box replaces the form in place; if the user scrolled down
+      // to reach the submit button, it renders above the fold. Wait a tick for
+      // Angular to render the @if block, then bring it into view.
+      setTimeout(() => this.successBox?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' }));
     } catch (e) {
       this.error = 'Something went wrong. Please try again.';
     } finally {

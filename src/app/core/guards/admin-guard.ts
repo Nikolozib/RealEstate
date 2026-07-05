@@ -10,10 +10,10 @@ export const adminGuard: CanActivateFn = () => {
   const userService = inject(UserService);
   const router = inject(Router);
 
-  return auth.isLoggedIn$.pipe(
+  return auth.isVerified$.pipe(
     take(1),
-    switchMap(isLoggedIn => {
-      if (!isLoggedIn) return of(router.createUrlTree(['/auth/login']));
+    switchMap(isVerified => {
+      if (!isVerified) return of(router.createUrlTree(['/auth/login']));
       const user = auth.getCurrentUser();
       if (!user) return of(router.createUrlTree(['/auth/login']));
       return userService.getUserById(user.uid).pipe(

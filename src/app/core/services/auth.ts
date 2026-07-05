@@ -16,6 +16,10 @@ export class AuthService {
 
   readonly currentUser$ = user(this.auth).pipe(shareReplay(1));
   readonly isLoggedIn$ = this.currentUser$.pipe(map(u => !!u));
+  // True only once the email is verified — this is what UI should gate on,
+  // since Firebase signs a user in immediately after registration, before
+  // they've verified anything.
+  readonly isVerified$ = this.currentUser$.pipe(map(u => !!u && u.emailVerified));
 
   register(email: string, password: string) {
     return createUserWithEmailAndPassword(this.auth, email, password);

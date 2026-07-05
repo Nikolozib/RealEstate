@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ElementRef, ViewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { take } from 'rxjs/operators';
@@ -43,6 +43,8 @@ export class PropertyDetail implements OnInit {
   inquirySent = false;
   inquiryError = '';
 
+  @ViewChild('inquirySuccessBox') inquirySuccessBox?: ElementRef<HTMLElement>;
+
   constructor(
     private route: ActivatedRoute,
     private propertyService: PropertyService,
@@ -57,10 +59,10 @@ export class PropertyDetail implements OnInit {
     AOS.init({ duration: 700, easing: 'ease-in-out', once: true, offset: 40 });
 
     this.authService.currentUser$.subscribe(u => {
-      this.isLoggedIn = !!u;
+      this.isLoggedIn = !!u && u.emailVerified;
       this.currentUserId = u?.uid ?? '';
 
-      if (u) {
+      if (u && u.emailVerified) {
         this.userService.getUserById(u.uid).pipe(take(1)).subscribe(userData => {
           this.isSaved = userData?.savedProperties?.includes(this.property?.id ?? '') ?? false;
         });
@@ -174,6 +176,10 @@ export class PropertyDetail implements OnInit {
       this.inquiryEmail = '';
       this.inquiryPhone = '';
       this.inquiryMessage = '';
+      // The success box replaces the form in place; if the user scrolled down
+      // to reach the submit button, it renders above the fold. Wait a tick for
+      // Angular to render the @if block, then bring it into view.
+      setTimeout(() => this.inquirySuccessBox?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' }));
     } catch (e) {
       this.inquiryError = 'Something went wrong. Please try again.';
     } finally {

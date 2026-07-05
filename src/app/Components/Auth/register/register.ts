@@ -98,9 +98,37 @@ export class Register implements OnDestroy {
       this.startPolling();
 
     } catch (e: any) {
-      this.error = this.getErrorMessage(e.code);
+      if (e.code === 'auth/email-already-in-use') {
+        await this.resumeIfUnverified();
+      } else {
+        this.error = this.getErrorMessage(e.code);
+      }
     } finally {
       this.loading = false;
+    }
+  }
+
+  // Firebase never lets you "re-register" an email, even if the original
+  // signup was abandoned before verification — that would otherwise strand
+  // the email forever. If these credentials belong to that same unverified
+  // account, sign in, resend the link, and drop them back on the waiting
+  // screen instead of a dead-end error.
+  private async resumeIfUnverified() {
+    try {
+      const cred = await this.authService.login(this.email, this.password);
+
+      if (cred.user.emailVerified) {
+        await this.authService.logout();
+        this.error = 'An account with this email already exists and is verified. Please sign in instead.';
+        return;
+      }
+
+      await this.authService.sendVerificationEmail(cred.user);
+      this.registeredEmail = this.email;
+      this.registrationComplete = true;
+      this.startPolling();
+    } catch {
+      this.error = 'An account with this email already exists. If it\'s yours, sign in instead — or use a different email.';
     }
   }
 
@@ -151,7 +179,6 @@ export class Register implements OnDestroy {
 
   getErrorMessage(code: string): string {
     switch (code) {
-      case 'auth/email-already-in-use': return 'An account with this email already exists.';
       case 'auth/invalid-email':        return 'Please enter a valid email address.';
       case 'auth/weak-password':        return 'Password should be at least 6 characters.';
       default:                          return 'Something went wrong. Please try again.';
