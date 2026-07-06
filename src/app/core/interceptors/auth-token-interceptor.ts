@@ -2,6 +2,7 @@ import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Auth } from '@angular/fire/auth';
 import { from, switchMap } from 'rxjs';
+import { SKIP_AUTH_TOKEN } from './http-context';
 
 // Attaches the current Firebase ID token to outgoing HttpClient requests
 // (e.g. calls to Cloud Functions or another first-party API). Firestore/Auth
@@ -11,7 +12,7 @@ export const authTokenInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(Auth);
   const user = auth.currentUser;
 
-  if (!user) return next(req);
+  if (!user || req.context.get(SKIP_AUTH_TOKEN)) return next(req);
 
   return from(user.getIdToken()).pipe(
     switchMap(token =>

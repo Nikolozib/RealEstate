@@ -1,12 +1,12 @@
-$primary:       #1a4a3a;
-$primary-light: #2d6e57;
-$secondary:     #c8975a;
-$secondary-dark:#a87a45;
-$bg:            #f7f5f1;
-$bg-card:       #ffffff;
-$text:          #1a1a2e;
-$text-secondary:#5a5a72;
-$border:        #e8e4de;
+$primary:       var(--color-primary);
+$primary-light: var(--color-primary-light);
+$secondary:     var(--color-secondary);
+$secondary-dark:var(--color-secondary-dark);
+$bg:            var(--color-bg);
+$bg-card:       var(--color-bg-card);
+$text:          var(--color-text);
+$text-secondary:var(--color-text-secondary);
+$border:        var(--color-border);
 $transition:    all 0.3s ease;
 
 
@@ -328,7 +328,7 @@ $transition:    all 0.3s ease;
 
 .skeleton-img {
   height: 220px;
-  background: linear-gradient(90deg, #e8e4de 25%, #f0ede8 50%, #e8e4de 75%);
+  background: linear-gradient(90deg, var(--color-border) 25%, #f0ede8 50%, var(--color-border) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
@@ -338,7 +338,7 @@ $transition:    all 0.3s ease;
 .skeleton-line {
   height: 14px;
   border-radius: 4px;
-  background: linear-gradient(90deg, #e8e4de 25%, #f0ede8 50%, #e8e4de 75%);
+  background: linear-gradient(90deg, var(--color-border) 25%, #f0ede8 50%, var(--color-border) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   margin-bottom: 12px;

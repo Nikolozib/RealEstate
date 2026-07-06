@@ -1,8 +1,8 @@
-$primary: #1a4a3a;
-$primary-dark: #112e24;
-$primary-darker: #0b1f19;
-$secondary: #c8975a;
-$white: #ffffff;
+$primary: var(--color-primary);
+$primary-dark: var(--color-primary-dark);
+$primary-darker: var(--color-primary-darker);
+$secondary: var(--color-secondary);
+$white: var(--color-bg-card);
 $text-muted: rgba(255, 255, 255, 0.55);
 $text-light: rgba(255, 255, 255, 0.75);
 $border: rgba(255, 255, 255, 0.1);

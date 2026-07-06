@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { take } from 'rxjs/operators';
 import { PropertyService } from '../../core/services/property';
 import { InquiryService } from '../../core/services/inquiry';
+import { N8nService } from '../../core/services/n8n';
 import { AuthService } from '../../core/services/auth';
 import { UserService } from '../../core/services/user';
 import { SeoService } from '../../core/services/seo';
@@ -16,7 +17,8 @@ import {
   isValidName,
   isValidPhone,
 } from '../../core/utils/validation';
-import * as AOS from 'aos';
+import { environment } from '../../environment/environment';
+import { initAos } from '../../core/utils/aos';
 
 @Component({
   selector: 'app-property-detail',
@@ -51,6 +53,7 @@ export class PropertyDetail implements OnInit {
     private route: ActivatedRoute,
     private propertyService: PropertyService,
     private inquiryService: InquiryService,
+    private n8n: N8nService,
     private authService: AuthService,
     private userService: UserService,
     private seo: SeoService,
@@ -61,7 +64,7 @@ export class PropertyDetail implements OnInit {
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   ngOnInit() {
-    if (this.isBrowser) AOS.init({ duration: 700, easing: 'ease-in-out', once: true, offset: 40 });
+    if (this.isBrowser) initAos({ duration: 700, easing: 'ease-in-out', once: true, offset: 40 });
 
     this.authService.currentUser$.subscribe(u => {
       this.isLoggedIn = !!u && u.emailVerified;
@@ -187,6 +190,22 @@ export class PropertyDetail implements OnInit {
         userId: this.currentUserId || null,
         agentId: this.property.agentId ?? ''
       });
+      // Fire-and-forget owner notification via n8n — the inquiry itself is
+      // already stored in Firestore, so a webhook failure is non-fatal.
+      this.n8n
+        .sendLead({
+          type: 'property_inquiry',
+          name: this.inquiryName,
+          email: this.inquiryEmail,
+          phone: this.inquiryPhone,
+          subject: '',
+          message: this.inquiryMessage,
+          propertyId: this.property.id ?? '',
+          propertyTitle: this.property.title,
+          propertyUrl: `${environment.siteUrl}/listings/${this.property.id ?? ''}`,
+        })
+        .catch(err => console.warn('Lead webhook failed:', err));
+
       this.inquirySent = true;
       this.toast.success('Inquiry sent! The agent will contact you soon.');
       this.inquiryName = '';

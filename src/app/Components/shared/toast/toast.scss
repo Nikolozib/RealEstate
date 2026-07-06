@@ -15,15 +15,15 @@
   gap: 0.6rem;
   padding: 0.85rem 1rem;
   border-radius: 10px;
-  background: #1a1a2e;
+  background: var(--color-text);
   color: #fff;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
   font-size: 0.92rem;
   animation: toast-in 0.2s ease-out;
 
-  &.success { background: #1a4a3a; }
+  &.success { background: var(--color-primary); }
   &.error { background: #8a2f2f; }
-  &.info { background: #1a1a2e; }
+  &.info { background: var(--color-text); }
 
   i:first-child {
     font-size: 1.05rem;

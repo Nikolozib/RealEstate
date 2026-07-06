@@ -3,6 +3,8 @@ import { RouterLink, Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth';
 import { UserService } from '../../../core/services/user';
+import { N8nService } from '../../../core/services/n8n';
+import { SeoService } from '../../../core/services/seo';
 import {
   emailValidator,
   nameValidator,
@@ -50,9 +52,17 @@ export class Register implements OnDestroy {
   constructor(
     private authService: AuthService,
     private userService: UserService,
+    private n8n: N8nService,
     private router: Router,
     private cdr: ChangeDetectorRef,
-  ) {}
+    seo: SeoService,
+  ) {
+    seo.setPageMeta(
+      'Create Account | RealEstate Georgia',
+      'Register to save properties and contact agents on RealEstate Georgia.'
+    );
+    seo.setCanonicalUrl('/auth/register');
+  }
 
   get passwordsMismatch(): boolean {
     const confirm = this.registerForm.controls.confirmPassword;
@@ -90,6 +100,12 @@ export class Register implements OnDestroy {
       }
 
       await this.authService.sendVerificationEmail(cred.user);
+
+      // Fire-and-forget owner notification — signup must succeed even if
+      // the alert webhook is down.
+      this.n8n
+        .sendAdminAlert('user_registered', `${displayName} <${email}> just created an account.`)
+        .catch(err => console.warn('Admin alert webhook failed:', err));
 
       this.registeredEmail = email!;
       this.registrationComplete = true;

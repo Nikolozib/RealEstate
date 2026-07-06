@@ -1,5 +1,26 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
+/* ─── Design tokens ───────────────────────────────────────────
+   Single source of truth for the brand palette and typography.
+   Component SCSS files alias these ($primary: var(--color-primary))
+   so changing a color here restyles the whole app. */
+:root {
+  --color-primary: #1a4a3a;
+  --color-primary-light: #2d6e57;
+  --color-primary-dark: #112e24;
+  --color-primary-darker: #0b1f19;
+  --color-secondary: #c8975a;
+  --color-secondary-dark: #a87a45;
+  --color-bg: #f7f5f1;
+  --color-bg-card: #ffffff;
+  --color-text: #1a1a2e;
+  --color-text-secondary: #5a5a72;
+  --color-border: #e8e4de;
+  --font-heading: 'Playfair Display', serif;
+  --font-body: 'Inter', sans-serif;
+  --transition-base: all 0.3s ease;
+}
+
 *, *::before, *::after {
   margin: 0;
   padding: 0;
@@ -15,4 +36,25 @@ html, body {
 
 body {
   overflow-x: hidden;
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+/* ─── Reduced motion ──────────────────────────────────────────
+   Collapse all animation for users who ask for less motion, and
+   force AOS-animated elements visible so nothing hides behind a
+   scroll animation that will never run. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  [data-aos] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }

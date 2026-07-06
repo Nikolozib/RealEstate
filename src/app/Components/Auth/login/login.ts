@@ -2,6 +2,7 @@ import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth';
+import { SeoService } from '../../../core/services/seo';
 import { emailValidator } from '../../../core/utils/form-validators';
 
 @Component({
@@ -36,7 +37,11 @@ export class Login {
     private authService: AuthService,
     private router: Router,
     private cdr: ChangeDetectorRef,
-  ) {}
+    seo: SeoService,
+  ) {
+    seo.setPageMeta('Sign In | RealEstate Georgia', 'Sign in to your RealEstate Georgia account.');
+    seo.setCanonicalUrl('/auth/login');
+  }
 
   async login() {
     if (this.loginForm.invalid) {

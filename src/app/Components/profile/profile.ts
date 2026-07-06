@@ -16,6 +16,7 @@ import {
   phoneValidator,
 } from '../../core/utils/form-validators';
 import * as AOS from 'aos';
+import { initAos } from '../../core/utils/aos';
 
 @Component({
   selector: 'app-profile',
@@ -41,6 +42,8 @@ export class Profile implements OnInit {
   changingPassword = false;
   passwordError = '';
   passwordSuccess = false;
+  resetSending = false;
+  resetEmailSent = false;
 
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
@@ -73,7 +76,7 @@ export class Profile implements OnInit {
       'Manage your account and saved properties.'
     );
     this.seo.setCanonicalUrl('/profile');
-    if (this.isBrowser) AOS.init({ duration: 700, easing: 'ease-in-out', once: true, offset: 40 });
+    if (this.isBrowser) initAos({ duration: 700, easing: 'ease-in-out', once: true, offset: 40 });
 
     this.authService.currentUser$.pipe(take(1)).subscribe(async currentUser => {
       if (!currentUser) {
@@ -165,9 +168,33 @@ export class Profile implements OnInit {
     this.showChangePassword = !this.showChangePassword;
     this.passwordError = '';
     this.passwordSuccess = false;
+    this.resetEmailSent = false;
     this.passwordForm.reset();
     this.showCurrentPassword = false;
     this.showNewPassword = false;
+  }
+
+  // Escape hatch for users who opened "change password" but don't remember
+  // their current one: email them the same reset link the login page offers.
+  async sendPasswordResetEmail() {
+    const email = this.user?.email || this.authService.getCurrentUser()?.email;
+    if (!email || this.resetSending) return;
+
+    this.resetSending = true;
+    this.passwordError = '';
+    this.cdr.detectChanges();
+
+    try {
+      await this.authService.sendPasswordReset(email);
+      this.resetEmailSent = true;
+      this.toast.success('Password reset link sent to your email.');
+    } catch (e) {
+      console.error('Failed to send reset email:', e);
+      this.toast.error('Failed to send the reset email. Please try again.');
+    } finally {
+      this.resetSending = false;
+      this.cdr.detectChanges();
+    }
   }
 
   async changePassword() {

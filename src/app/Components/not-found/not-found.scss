@@ -1,10 +1,10 @@
-$primary:       #1a4a3a;
-$secondary:     #c8975a;
-$secondary-dark:#a87a45;
-$bg:            #f7f5f1;
-$text:          #1a1a2e;
-$text-secondary:#5a5a72;
-$border:        #e8e4de;
+$primary:       var(--color-primary);
+$secondary:     var(--color-secondary);
+$secondary-dark:var(--color-secondary-dark);
+$bg:            var(--color-bg);
+$text:          var(--color-text);
+$text-secondary:var(--color-text-secondary);
+$border:        var(--color-border);
 $transition:    all 0.3s ease;
 
 

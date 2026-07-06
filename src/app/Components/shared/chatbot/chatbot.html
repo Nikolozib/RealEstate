@@ -1,0 +1,76 @@
+@if (open()) {
+  <section class="chatbot__panel" role="dialog" aria-label="Support chat" (keydown.escape)="close()">
+    <header class="chatbot__header">
+      <div class="chatbot__title">
+        <span class="chatbot__avatar"><i class="fa-solid fa-headset" aria-hidden="true"></i></span>
+        <div class="chatbot__title-text">
+          <strong>RealSang Assistant</strong>
+          <span>Ask about buying, renting &amp; listings</span>
+        </div>
+      </div>
+      <button type="button" class="chatbot__close" (click)="close()" aria-label="Close chat">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+    </header>
+
+    <div class="chatbot__messages" #messagesEl aria-live="polite">
+      @for (msg of messages(); track $index) {
+        <div class="chatbot__msg" [class.chatbot__msg--user]="msg.role === 'user'">
+          {{ msg.content }}
+        </div>
+      }
+
+      @if (typing()) {
+        <div class="chatbot__msg chatbot__msg--typing" aria-label="Assistant is typing">
+          <span class="chatbot__dot"></span>
+          <span class="chatbot__dot"></span>
+          <span class="chatbot__dot"></span>
+        </div>
+      }
+
+      @if (failed()) {
+        <div class="chatbot__error" role="alert">
+          <span>Couldn't reach the assistant. It may be waking up — please try again.</span>
+          <button type="button" class="chatbot__retry" (click)="retry()">
+            <i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Try again
+          </button>
+        </div>
+      }
+    </div>
+
+    <form class="chatbot__inputbar" (ngSubmit)="send()">
+      <input
+        #inputEl
+        type="text"
+        name="chatMessage"
+        [(ngModel)]="draft"
+        placeholder="Type your question..."
+        autocomplete="off"
+        maxlength="500"
+        aria-label="Chat message"
+      />
+      <button
+        type="submit"
+        class="chatbot__send"
+        [disabled]="typing() || !draft.trim()"
+        aria-label="Send message"
+      >
+        <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+      </button>
+    </form>
+  </section>
+}
+
+<button
+  type="button"
+  class="chatbot__fab"
+  (click)="toggle()"
+  [attr.aria-expanded]="open()"
+  [attr.aria-label]="open() ? 'Close support chat' : 'Open support chat'"
+>
+  @if (open()) {
+    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+  } @else {
+    <i class="fa-solid fa-comments" aria-hidden="true"></i>
+  }
+</button>

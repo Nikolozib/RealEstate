@@ -167,6 +167,13 @@
                 </div>
               }
 
+              @if (resetEmailSent) {
+                <div class="profile-card__success">
+                  <i class="fa-solid fa-envelope-circle-check"></i>
+                  Reset link sent to your email — follow it to set a new password.
+                </div>
+              }
+
               <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
                 <div class="form-group">
                   <label class="form-label">Current Password</label>
@@ -182,6 +189,18 @@
                       <i [class]="showCurrentPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
                     </button>
                   </div>
+                  <button
+                    type="button"
+                    class="form-forgot"
+                    (click)="sendPasswordResetEmail()"
+                    [disabled]="resetSending"
+                  >
+                    @if (resetSending) {
+                      <i class="fa-solid fa-spinner fa-spin"></i> Sending reset link...
+                    } @else {
+                      Forgot your current password?
+                    }
+                  </button>
                 </div>
 
                 <div class="form-group">

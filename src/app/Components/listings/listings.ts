@@ -13,6 +13,7 @@ import {
   clampPage,
 } from '../../core/utils/pagination';
 import * as AOS from 'aos';
+import { initAos } from '../../core/utils/aos';
 
 @Component({
   selector: 'app-listings',
@@ -113,7 +114,7 @@ export class Listings implements OnInit {
     });
 
     this.loadProperties();
-    if (this.isBrowser) AOS.init({ duration: 700, easing: 'ease-in-out', once: true, offset: 40 });
+    if (this.isBrowser) initAos({ duration: 700, easing: 'ease-in-out', once: true, offset: 40 });
   }
 
   private getFirestoreFilters() {
@@ -247,6 +248,18 @@ export class Listings implements OnInit {
   onClientFilterChange() {
     this.currentPage = 1;
     this.applyFilters();
+  }
+
+  // Search re-filters on every keystroke; a short debounce keeps the list
+  // (and its AOS/pagination recalculation) from thrashing while typing.
+  private searchDebounce: ReturnType<typeof setTimeout> | null = null;
+
+  onSearchChange() {
+    if (this.searchDebounce) clearTimeout(this.searchDebounce);
+    this.searchDebounce = setTimeout(() => {
+      this.onClientFilterChange();
+      this.cdr.detectChanges();
+    }, 250);
   }
 
   getFillStyle(): string {

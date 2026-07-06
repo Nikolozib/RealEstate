@@ -6,6 +6,7 @@ import { PropertyService } from '../../core/services/property';
 import { Property } from '../../core/services/models/property.model';
 import { SeoService } from '../../core/services/seo';
 import * as AOS from 'aos';
+import { initAos } from '../../core/utils/aos';
 
 @Component({
   selector: 'app-home',
@@ -90,7 +91,7 @@ export class Home implements OnInit, OnDestroy {
     this.loadFeaturedProperties();
     if (this.isBrowser) {
       this.startSlider();
-      AOS.init({ duration: 800, easing: 'ease-in-out', once: true, offset: 60 });
+      initAos({ duration: 800, easing: 'ease-in-out', once: true, offset: 60 });
     }
   }
 

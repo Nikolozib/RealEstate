@@ -2,7 +2,7 @@ import { Component, OnInit, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser, NgOptimizedImage } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { SeoService } from '../../core/services/seo';
-import * as AOS from 'aos';
+import { initAos } from '../../core/utils/aos';
 
 @Component({
   selector: 'app-about',
@@ -57,6 +57,6 @@ export class About implements OnInit {
       'Learn about our team, mission and values. We are Georgia\'s most trusted real estate platform.'
     );
     this.seo.setCanonicalUrl('/about');
-    if (this.isBrowser) AOS.init({ duration: 800, easing: 'ease-in-out', once: true, offset: 60 });
+    if (this.isBrowser) initAos({ duration: 800, easing: 'ease-in-out', once: true, offset: 60 });
   }
 }

@@ -16,6 +16,7 @@ import {
   clampPage,
 } from '../../core/utils/pagination';
 import * as AOS from 'aos';
+import { initAos } from '../../core/utils/aos';
 
 @Component({
   selector: 'app-favorites',
@@ -50,7 +51,7 @@ export class Favorites implements OnInit {
       'Your saved and favorite property listings.'
     );
     this.seo.setCanonicalUrl('/favorites');
-    if (this.isBrowser) AOS.init({ duration: 700, easing: 'ease-in-out', once: true, offset: 40 });
+    if (this.isBrowser) initAos({ duration: 700, easing: 'ease-in-out', once: true, offset: 40 });
 
     this.authService.currentUser$.pipe(take(1)).subscribe(currentUser => {
       if (!currentUser) {

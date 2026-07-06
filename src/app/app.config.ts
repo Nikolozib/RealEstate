@@ -1,4 +1,4 @@
-import { ApplicationConfig } from '@angular/core';
+import { ApplicationConfig, ErrorHandler } from '@angular/core';
 import {
   provideRouter,
   withRouterConfig,
@@ -16,6 +16,7 @@ import { environment } from './environment/environment';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { authTokenInterceptor } from './core/interceptors/auth-token-interceptor';
 import { errorInterceptor } from './core/interceptors/error-interceptor';
+import { GlobalErrorHandler } from './core/handlers/global-error-handler';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -31,5 +32,6 @@ export const appConfig: ApplicationConfig = {
     provideFirestore(() => getFirestore()),
     provideStorage(() => getStorage()),
     provideClientHydration(withEventReplay()),
+    { provide: ErrorHandler, useClass: GlobalErrorHandler },
   ],
 };

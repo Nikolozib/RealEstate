@@ -2,6 +2,7 @@ import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild, inject, PL
 import { isPlatformBrowser } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { InquiryService } from '../../core/services/inquiry';
+import { N8nService } from '../../core/services/n8n';
 import { SeoService } from '../../core/services/seo';
 import { ToastService } from '../../core/services/toast';
 import {
@@ -10,7 +11,7 @@ import {
   nameValidator,
   phoneValidator,
 } from '../../core/utils/form-validators';
-import * as AOS from 'aos';
+import { initAos } from '../../core/utils/aos';
 
 @Component({
   selector: 'app-contact',
@@ -61,6 +62,7 @@ export class Contact implements OnInit {
 
   constructor(
     private inquiryService: InquiryService,
+    private n8n: N8nService,
     private seo: SeoService,
     private toast: ToastService,
     private cdr: ChangeDetectorRef,
@@ -72,7 +74,7 @@ export class Contact implements OnInit {
       'Get in touch with our team. We are here to help you find your perfect property in Georgia.',
     );
     this.seo.setCanonicalUrl('/contact');
-    if (this.isBrowser) AOS.init({ duration: 700, easing: 'ease-in-out', once: true, offset: 40 });
+    if (this.isBrowser) initAos({ duration: 700, easing: 'ease-in-out', once: true, offset: 40 });
   }
 
   async send() {
@@ -100,6 +102,22 @@ export class Contact implements OnInit {
         userId: null,
         agentId: '',
       });
+      // Fire-and-forget: the lead is already saved in Firestore, this only
+      // emails the owner via n8n. A webhook hiccup must not fail the UX.
+      this.n8n
+        .sendLead({
+          type: 'contact',
+          name: name!,
+          email: email!,
+          phone: phone ?? '',
+          subject: subject ?? '',
+          message: message!,
+          propertyId: '',
+          propertyTitle: '',
+          propertyUrl: '',
+        })
+        .catch(err => console.warn('Lead webhook failed:', err));
+
       this.sent = true;
       this.toast.success('Message sent! We\'ll get back to you soon.');
       this.contactForm.reset();

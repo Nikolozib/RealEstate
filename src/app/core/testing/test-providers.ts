@@ -1,4 +1,5 @@
 import { EnvironmentProviders, Provider } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
@@ -34,6 +35,7 @@ function activatedRouteStub(options: RouteStubOptions = {}) {
 export function firebaseTestProviders(routeOptions: RouteStubOptions = {}): (Provider | EnvironmentProviders)[] {
   return [
     provideRouter(routes),
+    provideHttpClient(),
     provideFirebaseApp(() => initializeApp(environment.firebase)),
     provideAuth(() => getAuth()),
     provideFirestore(() => getFirestore()),

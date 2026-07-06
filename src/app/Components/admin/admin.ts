@@ -21,6 +21,7 @@ import {
   clampPage,
 } from '../../core/utils/pagination';
 import * as AOS from 'aos';
+import { initAos } from '../../core/utils/aos';
 
 @Component({
   selector: 'app-admin',
@@ -95,7 +96,7 @@ export class Admin implements OnInit {
 
   ngOnInit() {
     this.seo.setPageMeta('Admin Panel | RealEstate Georgia', 'Manage properties and inquiries.');
-    if (this.isBrowser) AOS.init({ duration: 600, easing: 'ease-in-out', once: true });
+    if (this.isBrowser) initAos({ duration: 600, easing: 'ease-in-out', once: true });
 
     const user = this.authService.getCurrentUser();
     if (!user) {

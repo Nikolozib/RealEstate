@@ -86,6 +86,23 @@ helpers). Component specs that touch Firebase-backed services initialize a real 
 Firebase app via `src/app/core/testing/test-providers.ts` — no emulator required for the current
 suite, but note that a few specs (e.g. `listings`, `home`) call live Firestore reads.
 
+## n8n integration (leads, alerts, chatbot)
+
+Three n8n workflows (hosted on Render) power the site's automation, called directly from the
+browser as `POST` webhooks with an `X-Webhook-Token` header:
+
+- **Lead notifications** — the contact form and property inquiry form email the owner (and log to
+  a Google Sheet) via `webhook/lead`, *in addition to* saving the inquiry in Firestore. Webhook
+  failures are non-fatal: the Firestore save is the source of truth.
+- **Admin alerts** — `webhook/admin-alert` fires on new user registration.
+- **Chatbot** — the floating support widget (bottom-right on every page) chats through
+  `webhook/chat`, sending the full conversation history each turn.
+
+URLs and the token live in `src/app/environment/environment*.ts` under `n8n`. The token is a
+public client-side identifier (like the Firebase config), not a secret. The n8n server runs on
+Render's free tier — a cold start can delay a response by ~50s, so the client uses a 90s timeout
+and the chatbot shows a retry prompt on failure.
+
 ## Deployment (Netlify)
 
 This project deploys to Netlify with SSR enabled via the `@netlify/angular-runtime` build plugin
