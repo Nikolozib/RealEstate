@@ -16,7 +16,15 @@
     <div class="chatbot__messages" #messagesEl aria-live="polite">
       @for (msg of messages(); track $index) {
         <div class="chatbot__msg" [class.chatbot__msg--user]="msg.role === 'user'">
-          {{ msg.content }}
+          @for (part of linkify(msg.content); track $index) {
+            @if (part.href) {
+              <a class="chatbot__link" [href]="part.href" target="_blank" rel="noopener">
+                {{ part.text }} <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+              </a>
+            } @else {
+              {{ part.text }}
+            }
+          }
         </div>
       }
 

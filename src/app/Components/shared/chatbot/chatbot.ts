@@ -117,4 +117,25 @@ export class Chatbot {
       if (el) el.scrollTop = el.scrollHeight;
     }, 50);
   }
+
+  // Splits a message into text and link segments so the template can render
+  // URLs as real anchors (the bot recommends listings by link). Trailing
+  // punctuation stays outside the link so "…/listings/abc." doesn't 404.
+  linkify(content: string): { text: string; href?: string }[] {
+    const parts: { text: string; href?: string }[] = [];
+    const urlPattern = /https?:\/\/[^\s]+/g;
+    let cursor = 0;
+    for (const match of content.matchAll(urlPattern)) {
+      const index = match.index ?? 0;
+      const url = match[0].replace(/[.,!?)]+$/, '');
+      if (index > cursor) parts.push({ text: content.slice(cursor, index) });
+      parts.push({
+        text: url.includes('/listings/') ? 'View listing' : url.replace(/^https?:\/\//, ''),
+        href: url,
+      });
+      cursor = index + url.length;
+    }
+    if (cursor < content.length) parts.push({ text: content.slice(cursor) });
+    return parts;
+  }
 }

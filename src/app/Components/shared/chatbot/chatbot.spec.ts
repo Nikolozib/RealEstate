@@ -23,4 +23,21 @@ describe('Chatbot', () => {
     expect(component.messages().length).toBe(1);
     expect(component.messages()[0].role).toBe('assistant');
   });
+
+  it('should linkify listing URLs with a friendly label', () => {
+    const component = TestBed.createComponent(Chatbot).componentInstance;
+    const parts = component.linkify(
+      'Check this out: https://realsang.netlify.app/listings/abc123. Great value!'
+    );
+    expect(parts).toEqual([
+      { text: 'Check this out: ' },
+      { text: 'View listing', href: 'https://realsang.netlify.app/listings/abc123' },
+      { text: '. Great value!' },
+    ]);
+  });
+
+  it('should return plain text untouched', () => {
+    const component = TestBed.createComponent(Chatbot).componentInstance;
+    expect(component.linkify('No links here.')).toEqual([{ text: 'No links here.' }]);
+  });
 });

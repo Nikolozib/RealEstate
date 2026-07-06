@@ -158,6 +158,25 @@
   }
 }
 
+.chatbot__link {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  transition: color 0.3s ease;
+
+  i {
+    font-size: 0.7em;
+  }
+
+  &:hover {
+    color: var(--color-secondary);
+  }
+
+  .chatbot__msg--user & {
+    color: #fff;
+  }
+}
+
 .chatbot__dot {
   width: 7px;
   height: 7px;
