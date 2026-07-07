@@ -2,5 +2,10 @@
   command = "npm run build"
   publish = "dist/RealEstate/browser"
 
-[[plugins]]
-  package = "@netlify/angular-runtime"
+# Client-rendered routes (listings/:id, auth, profile, …) fall back to the
+# CSR shell that the Angular build emits for exactly this purpose. Prerendered
+# pages are real files and are served directly, bypassing this redirect.
+[[redirects]]
+  from = "/*"
+  to = "/index.csr.html"
+  status = 200
