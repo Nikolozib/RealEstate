@@ -1,6 +1,7 @@
-import { ChangeDetectorRef, Component, ElementRef, OnDestroy, ViewChild, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { take } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth';
 import { UserService } from '../../../core/services/user';
 import { N8nService } from '../../../core/services/n8n';
@@ -20,7 +21,7 @@ import {
   templateUrl: './register.html',
   styleUrl: './register.scss',
 })
-export class Register implements OnDestroy {
+export class Register implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
 
   loading = false;
@@ -33,6 +34,7 @@ export class Register implements OnDestroy {
   profileWarning = '';
   resendLoading = false;
   resendSuccess = false;
+  resendError = '';
 
   private pollInterval: any = null;
 
@@ -62,6 +64,21 @@ export class Register implements OnDestroy {
       'Register to save properties and contact agents on RealEstate Georgia.'
     );
     seo.setCanonicalUrl('/auth/register');
+  }
+
+  // If an earlier signup was interrupted (refresh, back navigation, a detour
+  // through the login page) the unverified Firebase session usually still
+  // exists — resume the "check your inbox" screen instead of showing a form
+  // that can only fail with "email already in use".
+  ngOnInit() {
+    this.authService.currentUser$.pipe(take(1)).subscribe(user => {
+      if (user && !user.emailVerified && !this.registrationComplete) {
+        this.registeredEmail = user.email ?? '';
+        this.registrationComplete = true;
+        this.cdr.detectChanges();
+        this.startPolling();
+      }
+    });
   }
 
   get passwordsMismatch(): boolean {
@@ -167,23 +184,34 @@ export class Register implements OnDestroy {
   // screen instead of a dead-end error.
   private async resumeIfUnverified() {
     const { email, password } = this.registerForm.getRawValue();
+    let cred;
     try {
-      const cred = await this.authService.login(email!, password!);
-
-      if (cred.user.emailVerified) {
-        await this.authService.logout();
-        this.error = 'An account with this email already exists and is verified. Please sign in instead.';
-        return;
-      }
-
-      await this.authService.sendVerificationEmail(cred.user);
-      this.registeredEmail = email!;
-      this.registrationComplete = true;
-      this.scrollToVerifyCard();
-      this.startPolling();
+      cred = await this.authService.login(email!, password!);
     } catch {
-      this.error = 'An account with this email already exists. If it\'s yours, sign in instead — or use a different email.';
+      this.error =
+        'An account with this email already exists but this password doesn\'t match it. ' +
+        'Use the password from your first signup, reset it from the sign-in page, or use a different email.';
+      return;
     }
+
+    if (cred.user.emailVerified) {
+      await this.authService.logout();
+      this.error = 'An account with this email already exists and is verified. Please sign in instead.';
+      return;
+    }
+
+    // Resend is best-effort: Firebase throttles verification emails hard
+    // (auth/too-many-requests), one was already sent by the original signup,
+    // and landing back on the waiting screen matters more than the resend.
+    try {
+      await this.authService.sendVerificationEmail(cred.user);
+    } catch (e) {
+      console.warn('Verification resend failed:', e);
+    }
+    this.registeredEmail = email!;
+    this.registrationComplete = true;
+    this.scrollToVerifyCard();
+    this.startPolling();
   }
 
   // The "check your inbox" card replaces the registration form in place; if
@@ -229,6 +257,7 @@ export class Register implements OnDestroy {
 
     this.resendLoading = true;
     this.resendSuccess = false;
+    this.resendError = '';
 
     try {
       await this.authService.sendVerificationEmail(user);
@@ -237,8 +266,12 @@ export class Register implements OnDestroy {
         this.resendSuccess = false;
         this.cdr.detectChanges();
       }, 4000);
-    } catch (e) {
+    } catch (e: any) {
       console.warn('Resend failed:', e);
+      this.resendError =
+        e?.code === 'auth/too-many-requests'
+          ? 'Firebase is rate-limiting resends. The earlier email is still valid — check your spam folder, or wait a few minutes and try again.'
+          : 'Could not resend the email right now. Please try again in a moment.';
     } finally {
       this.resendLoading = false;
       this.cdr.detectChanges();

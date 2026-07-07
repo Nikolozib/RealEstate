@@ -222,6 +222,13 @@
             </div>
           }
 
+          @if (resendError) {
+            <div class="auth-card__error" role="alert">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              {{ resendError }}
+            </div>
+          }
+
           <!-- Resend is the only action available -->
           <button
             class="btn btn--ghost btn--full"

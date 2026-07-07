@@ -63,11 +63,11 @@ export class Login {
     try {
       const cred = await this.authService.login(email!, password!);
 
-      // Block unverified users — sign them out and show a clear message
+      // Unverified users go back to the verification waiting screen — keep
+      // the session alive so the register page can resume it and offer a
+      // resend, instead of stranding them behind "email already in use".
       if (!cred.user.emailVerified) {
-        await this.authService.logout();
-        this.error =
-          'Please verify your email before signing in. Check your inbox for the verification link.';
+        this.router.navigate(['/auth/register']);
         return;
       }
 
