@@ -1,50 +1,92 @@
-import { Component, ElementRef, ViewChild, inject, signal, PLATFORM_ID } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  ViewChild,
+  computed,
+  effect,
+  inject,
+  signal,
+  PLATFORM_ID,
+} from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ChatMessage, N8nService } from '../../../core/services/n8n';
+import { AuthService } from '../../../core/services/auth';
 
 const GREETING =
   "Hello! I'm the RealSang assistant. Ask me anything about buying, renting, " +
   'or finding property in Georgia.';
 
-const SESSION_KEY = 'rs-chat-session';
-const HISTORY_KEY = 'rs-chat-history';
+const SESSION_KEY_PREFIX = 'rs-chat-session:';
+const HISTORY_KEY_PREFIX = 'rs-chat-history:';
+
+// After this long without a reply, the thinking indicator switches to a
+// reassurance message — the n8n instance cold-starts in ~50s, and users
+// otherwise assume the bot is broken.
+const SLOW_REPLY_MS = 8_000;
 
 // Floating support/FAQ chat widget wired to the n8n chatbot webhook.
-// Conversation state lives in sessionStorage so it survives route changes
-// and reloads within a tab, but doesn't follow the visitor around forever.
+// Chatting requires a verified account (same gate the header uses), and each
+// user gets their own conversation: history and the n8n session id are keyed
+// by Firebase uid in localStorage, so accounts never share a thread.
 @Component({
   selector: 'app-chatbot',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   templateUrl: './chatbot.html',
   styleUrl: './chatbot.scss',
 })
 export class Chatbot {
   private n8n = inject(N8nService);
+  private auth = inject(AuthService);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
+  private readonly user = toSignal(this.auth.currentUser$);
+  // Unverified sessions count as signed-out, matching the rest of the UI.
+  private readonly uid = computed(() => {
+    const u = this.user();
+    return u && u.emailVerified ? u.uid : null;
+  });
+  readonly signedIn = computed(() => this.uid() !== null);
 
   readonly open = signal(false);
   readonly messages = signal<ChatMessage[]>([]);
   readonly typing = signal(false);
+  readonly slowReply = signal(false);
   readonly failed = signal(false);
 
   draft = '';
+  private loadedUid: string | null = null;
   private sessionId = '';
   private lastFailedMessage = '';
+  private slowTimer: ReturnType<typeof setTimeout> | undefined;
 
   @ViewChild('messagesEl') messagesEl?: ElementRef<HTMLElement>;
   @ViewChild('inputEl') inputEl?: ElementRef<HTMLInputElement>;
+
+  constructor() {
+    // Swap conversations when the account changes (login, logout, switch):
+    // the previous user's thread must never bleed into the next one.
+    effect(() => {
+      const uid = this.uid();
+      if (uid === this.loadedUid) return;
+      this.loadedUid = null;
+      this.sessionId = '';
+      this.lastFailedMessage = '';
+      this.messages.set([]);
+      this.failed.set(false);
+      if (uid && this.open()) this.loadConversation();
+    });
+  }
 
   toggle(): void {
     if (this.open()) {
       this.close();
       return;
     }
-    this.restoreSession();
-    if (this.messages().length === 0) {
-      this.messages.set([{ role: 'assistant', content: GREETING }]);
-    }
+    if (this.signedIn()) this.loadConversation();
     this.open.set(true);
     this.scrollToBottom();
     setTimeout(() => this.inputEl?.nativeElement.focus(), 50);
@@ -56,7 +98,7 @@ export class Chatbot {
 
   async send(retryText?: string): Promise<void> {
     const text = (retryText ?? this.draft).trim();
-    if (!text || this.typing()) return;
+    if (!text || this.typing() || !this.signedIn()) return;
 
     this.failed.set(false);
     if (!retryText) {
@@ -65,6 +107,8 @@ export class Chatbot {
       this.persist();
     }
     this.typing.set(true);
+    this.slowReply.set(false);
+    this.slowTimer = setTimeout(() => this.slowReply.set(true), SLOW_REPLY_MS);
     this.scrollToBottom();
 
     try {
@@ -79,7 +123,9 @@ export class Chatbot {
       this.lastFailedMessage = text;
       this.failed.set(true);
     } finally {
+      clearTimeout(this.slowTimer);
       this.typing.set(false);
+      this.slowReply.set(false);
       this.scrollToBottom();
     }
   }
@@ -88,23 +134,34 @@ export class Chatbot {
     this.send(this.lastFailedMessage);
   }
 
-  private restoreSession(): void {
-    if (!this.isBrowser || this.sessionId) return;
+  // Loads (or starts) the signed-in user's own conversation. localStorage —
+  // not sessionStorage — so the thread follows the account across tabs and
+  // visits on this device. The session id is minted once per user and reused,
+  // which keys the n8n workflow's memory per user too.
+  private loadConversation(): void {
+    const uid = this.uid();
+    if (!this.isBrowser || !uid || this.loadedUid === uid) return;
+    this.loadedUid = uid;
+    const sessionKey = SESSION_KEY_PREFIX + uid;
     try {
-      this.sessionId = sessionStorage.getItem(SESSION_KEY) ?? crypto.randomUUID();
-      sessionStorage.setItem(SESSION_KEY, this.sessionId);
-      const saved = sessionStorage.getItem(HISTORY_KEY);
+      this.sessionId = localStorage.getItem(sessionKey) ?? `${uid}-${crypto.randomUUID()}`;
+      localStorage.setItem(sessionKey, this.sessionId);
+      const saved = localStorage.getItem(HISTORY_KEY_PREFIX + uid);
       if (saved) this.messages.set(JSON.parse(saved));
     } catch {
       // Storage unavailable (private mode etc.) — chat still works in-memory.
-      if (!this.sessionId) this.sessionId = `${Date.now()}`;
+      if (!this.sessionId) this.sessionId = `${uid}-${Date.now()}`;
+    }
+    if (this.messages().length === 0) {
+      this.messages.set([{ role: 'assistant', content: GREETING }]);
     }
   }
 
   private persist(): void {
-    if (!this.isBrowser) return;
+    const uid = this.uid();
+    if (!this.isBrowser || !uid) return;
     try {
-      sessionStorage.setItem(HISTORY_KEY, JSON.stringify(this.messages()));
+      localStorage.setItem(HISTORY_KEY_PREFIX + uid, JSON.stringify(this.messages()));
     } catch {
       // Best-effort only.
     }
