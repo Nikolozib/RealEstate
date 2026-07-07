@@ -1,10 +1,7 @@
 import { AngularAppEngine, createRequestHandler } from '@angular/ssr';
-import { getAllowedHosts, getContext, getTrustProxyHeaders } from '@netlify/angular-runtime/app-engine.js';
+import { getContext } from '@netlify/angular-runtime/app-engine.js';
 
-const angularAppEngine = new AngularAppEngine({
-  allowedHosts: getAllowedHosts(),
-  trustProxyHeaders: getTrustProxyHeaders(),
-});
+const angularAppEngine = new AngularAppEngine();
 
 export async function netlifyAppEngineHandler(request: Request): Promise<Response> {
   const context = getContext();
