@@ -1,9 +1,8 @@
 import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
-import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ConfirmationResult, RecaptchaVerifier } from '@angular/fire/auth';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { take } from 'rxjs/operators';
-import { AuthService, isUserVerified } from '../../../core/services/auth';
+import { AuthService } from '../../../core/services/auth';
 import { UserService } from '../../../core/services/user';
 import { N8nService } from '../../../core/services/n8n';
 import { SeoService } from '../../../core/services/seo';
@@ -36,18 +35,6 @@ export class Register implements OnInit, OnDestroy {
   resendLoading = false;
   resendSuccess = false;
   resendError = '';
-
-  // SMS alternative to the email link.
-  phoneMode = false;
-  codeSent = false;
-  phoneLoading = false;
-  codeLoading = false;
-  phoneError = '';
-  phoneControl = new FormControl('', { nonNullable: true });
-  codeControl = new FormControl('', { nonNullable: true });
-
-  private confirmation: ConfirmationResult | null = null;
-  private recaptcha: RecaptchaVerifier | null = null;
 
   private pollInterval: any = null;
 
@@ -85,7 +72,7 @@ export class Register implements OnInit, OnDestroy {
   // that can only fail with "email already in use".
   ngOnInit() {
     this.authService.currentUser$.pipe(take(1)).subscribe(user => {
-      if (user && !isUserVerified(user) && !this.registrationComplete) {
+      if (user && !user.emailVerified && !this.registrationComplete) {
         this.registeredEmail = user.email ?? '';
         this.registrationComplete = true;
         this.cdr.detectChanges();
@@ -207,7 +194,7 @@ export class Register implements OnInit, OnDestroy {
       return;
     }
 
-    if (isUserVerified(cred.user)) {
+    if (cred.user.emailVerified) {
       await this.authService.logout();
       this.error = 'An account with this email already exists and is verified. Please sign in instead.';
       return;
@@ -242,7 +229,7 @@ export class Register implements OnInit, OnDestroy {
       try {
         await this.authService.reloadCurrentUser();
         const user = this.authService.getCurrentUser();
-        if (isUserVerified(user)) {
+        if (user?.emailVerified) {
           this.stopPolling();
           this.router.navigate(['/']);
         }
@@ -262,112 +249,6 @@ export class Register implements OnInit, OnDestroy {
   // Stop polling if the user navigates away
   ngOnDestroy() {
     this.stopPolling();
-    this.recaptcha?.clear();
-    this.recaptcha = null;
-  }
-
-  startPhoneVerification() {
-    this.phoneMode = true;
-    this.phoneError = '';
-    // Best guess at an E.164 prefill from the optional phone field: Georgian
-    // mobiles are 5XXXXXXXX locally, +995 5XXXXXXXX internationally.
-    const raw = (this.registerForm.controls.phone.value ?? '').replace(/[\s-()]/g, '');
-    if (raw.startsWith('+')) this.phoneControl.setValue(raw);
-    else if (/^5\d{8}$/.test(raw)) this.phoneControl.setValue(`+995${raw}`);
-    else if (/^995\d{9}$/.test(raw)) this.phoneControl.setValue(`+${raw}`);
-    this.cdr.detectChanges();
-  }
-
-  cancelPhoneVerification() {
-    this.phoneMode = false;
-    this.codeSent = false;
-    this.phoneError = '';
-    this.codeControl.setValue('');
-    this.confirmation = null;
-    this.cdr.detectChanges();
-  }
-
-  async sendPhoneCode() {
-    const user = this.authService.getCurrentUser();
-    if (!user || this.phoneLoading) return;
-
-    const phone = this.phoneControl.value.replace(/[\s-()]/g, '');
-    if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
-      this.phoneError = 'Enter the number in international format, e.g. +995 5XX XXX XXX.';
-      this.cdr.detectChanges();
-      return;
-    }
-
-    this.phoneLoading = true;
-    this.phoneError = '';
-    this.cdr.detectChanges();
-
-    try {
-      // A reCAPTCHA instance is single-use: recreate it for every attempt
-      // rather than reusing one that may already be consumed.
-      this.recaptcha?.clear();
-      this.recaptcha = this.authService.createRecaptcha('phone-recaptcha');
-      this.confirmation = await this.authService.linkPhoneNumber(user, phone, this.recaptcha);
-      this.codeSent = true;
-    } catch (e: any) {
-      console.warn('SMS send failed:', e);
-      this.recaptcha?.clear();
-      this.recaptcha = null;
-      this.phoneError = this.getPhoneErrorMessage(e?.code);
-    } finally {
-      this.phoneLoading = false;
-      this.cdr.detectChanges();
-    }
-  }
-
-  async confirmPhoneCode() {
-    if (!this.confirmation || this.codeLoading) return;
-
-    const code = this.codeControl.value.trim();
-    if (!/^\d{6}$/.test(code)) {
-      this.phoneError = 'Enter the 6-digit code from the SMS.';
-      this.cdr.detectChanges();
-      return;
-    }
-
-    this.codeLoading = true;
-    this.phoneError = '';
-    this.cdr.detectChanges();
-
-    try {
-      await this.confirmation.confirm(code);
-      await this.authService.reloadCurrentUser();
-      this.stopPolling();
-      this.router.navigate(['/']);
-    } catch (e: any) {
-      console.warn('Code confirm failed:', e);
-      this.phoneError = this.getPhoneErrorMessage(e?.code);
-    } finally {
-      this.codeLoading = false;
-      this.cdr.detectChanges();
-    }
-  }
-
-  private getPhoneErrorMessage(code?: string): string {
-    switch (code) {
-      case 'auth/invalid-phone-number':
-        return 'That phone number looks invalid. Use international format: +995 5XX XXX XXX.';
-      case 'auth/invalid-verification-code':
-        return 'That code is not right. Check the SMS and try again.';
-      case 'auth/code-expired':
-        return 'That code expired. Send a new one and try again.';
-      case 'auth/too-many-requests':
-        return 'Too many attempts. Please wait a few minutes and try again.';
-      case 'auth/credential-already-in-use':
-      case 'auth/account-exists-with-different-credential':
-        return 'This phone number is already linked to another account.';
-      case 'auth/provider-already-linked':
-        return 'A phone number is already linked to this account — try refreshing the page.';
-      case 'auth/billing-not-enabled':
-        return 'SMS verification is not enabled for this site yet. Please use the email link instead.';
-      default:
-        return 'Could not complete phone verification. Please try again or use the email link.';
-    }
   }
 
   async resendVerification() {

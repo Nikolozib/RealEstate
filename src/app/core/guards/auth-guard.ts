@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { AuthService, isUserVerified } from '../services/auth';
+import { AuthService } from '../services/auth';
 import { switchMap, take } from 'rxjs/operators';
 
 // Apply this guard to every protected route in app.routes.ts.
@@ -22,8 +22,8 @@ export const authGuard: CanActivateFn = () => {
       if (!user) return Promise.resolve(router.createUrlTree(['/auth/login']));
       return authService.reloadCurrentUser().then(() => {
         const freshUser = authService.getCurrentUser();
-        if (!freshUser)                  return router.createUrlTree(['/auth/login']);
-        if (!isUserVerified(freshUser))  return router.createUrlTree(['/auth/register']);
+        if (!freshUser)               return router.createUrlTree(['/auth/login']);
+        if (!freshUser.emailVerified) return router.createUrlTree(['/auth/register']);
         return true;
       });
     })
