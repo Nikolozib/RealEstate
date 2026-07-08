@@ -229,7 +229,6 @@
             </div>
           }
 
-          <!-- Resend is the only action available -->
           <button
             class="btn btn--ghost btn--full"
             (click)="resendVerification()"
@@ -241,6 +240,87 @@
               <i class="fa-solid fa-rotate-right"></i> Resend verification email
             }
           </button>
+
+          <!-- SMS as an alternative to the email link -->
+          <div class="verify-divider"><span>or</span></div>
+
+          @if (!phoneMode) {
+            <button class="btn btn--ghost btn--full" (click)="startPhoneVerification()">
+              <i class="fa-solid fa-mobile-screen"></i> Verify by phone instead
+            </button>
+          } @else {
+            <div class="phone-verify">
+              @if (!codeSent) {
+                <div class="form-group">
+                  <label class="form-label" for="verify-phone">Phone number</label>
+                  <input
+                    id="verify-phone"
+                    type="tel"
+                    class="form-input"
+                    [formControl]="phoneControl"
+                    placeholder="+995 5XX XXX XXX"
+                    autocomplete="tel"
+                  />
+                </div>
+                <button
+                  class="btn btn--primary btn--full"
+                  type="button"
+                  (click)="sendPhoneCode()"
+                  [disabled]="phoneLoading"
+                >
+                  @if (phoneLoading) {
+                    <i class="fa-solid fa-spinner fa-spin"></i> Sending code...
+                  } @else {
+                    <i class="fa-solid fa-paper-plane"></i> Send SMS code
+                  }
+                </button>
+              } @else {
+                <div class="form-group">
+                  <label class="form-label" for="verify-code">
+                    Enter the 6-digit code sent to {{ phoneControl.value }}
+                  </label>
+                  <input
+                    id="verify-code"
+                    type="text"
+                    class="form-input phone-verify__code"
+                    [formControl]="codeControl"
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
+                    maxlength="6"
+                    placeholder="••••••"
+                  />
+                </div>
+                <button
+                  class="btn btn--primary btn--full"
+                  type="button"
+                  (click)="confirmPhoneCode()"
+                  [disabled]="codeLoading"
+                >
+                  @if (codeLoading) {
+                    <i class="fa-solid fa-spinner fa-spin"></i> Verifying...
+                  } @else {
+                    <i class="fa-solid fa-check"></i> Confirm code
+                  }
+                </button>
+                <button class="phone-verify__change" type="button" (click)="codeSent = false">
+                  Use a different number
+                </button>
+              }
+
+              @if (phoneError) {
+                <div class="auth-card__error" role="alert">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  {{ phoneError }}
+                </div>
+              }
+
+              <button class="phone-verify__change" type="button" (click)="cancelPhoneVerification()">
+                Back to email verification
+              </button>
+            </div>
+          }
+
+          <div id="phone-recaptcha"></div>
 
           <p class="verify-footnote">
             <i class="fa-solid fa-triangle-exclamation"></i>

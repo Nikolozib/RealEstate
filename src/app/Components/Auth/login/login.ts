@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { AuthService } from '../../../core/services/auth';
+import { AuthService, isUserVerified } from '../../../core/services/auth';
 import { SeoService } from '../../../core/services/seo';
 import { emailValidator } from '../../../core/utils/form-validators';
 
@@ -66,7 +66,7 @@ export class Login {
       // Unverified users go back to the verification waiting screen — keep
       // the session alive so the register page can resume it and offer a
       // resend, instead of stranding them behind "email already in use".
-      if (!cred.user.emailVerified) {
+      if (!isUserVerified(cred.user)) {
         this.router.navigate(['/auth/register']);
         return;
       }

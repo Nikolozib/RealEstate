@@ -555,6 +555,50 @@ $transition:    all 0.3s ease;
   i { color: $secondary; font-size: 11px; }
 }
 
+.verify-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: $text-secondary;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: $border;
+  }
+}
+
+.phone-verify {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  &__code {
+    text-align: center;
+    font-size: 20px;
+    letter-spacing: 0.4em;
+  }
+
+  &__change {
+    background: none;
+    border: none;
+    padding: 4px;
+    font-size: 13px;
+    font-family: inherit;
+    color: $text-secondary;
+    text-decoration: underline;
+    cursor: pointer;
+    transition: $transition;
+
+    &:hover { color: $primary; }
+  }
+}
+
 // ─── RESPONSIVE ───────────────────────────────────────────
 @media (max-width: 768px) {
   .auth-page {

@@ -51,6 +51,15 @@ describe('Chatbot', () => {
     expect(component.signedIn()).toBe(false);
   });
 
+  it('should treat phone-verified users as signed in', () => {
+    const component = setup({
+      uid: 'u3',
+      emailVerified: false,
+      phoneNumber: '+995500000000',
+    }).componentInstance;
+    expect(component.signedIn()).toBe(true);
+  });
+
   it('should keep conversations separate per user', () => {
     const thread = [{ role: 'user', content: 'my secret question' }];
     localStorage.setItem('rs-chat-history:test-uid', JSON.stringify(thread));

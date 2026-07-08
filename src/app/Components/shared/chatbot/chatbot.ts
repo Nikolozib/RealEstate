@@ -13,7 +13,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ChatMessage, N8nService } from '../../../core/services/n8n';
-import { AuthService } from '../../../core/services/auth';
+import { AuthService, isUserVerified } from '../../../core/services/auth';
 
 const GREETING =
   "Hello! I'm the RealSang assistant. Ask me anything about buying, renting, " +
@@ -46,8 +46,8 @@ export class Chatbot {
   private readonly user = toSignal(this.auth.currentUser$);
   // Unverified sessions count as signed-out, matching the rest of the UI.
   private readonly uid = computed(() => {
-    const u = this.user();
-    return u && u.emailVerified ? u.uid : null;
+    const u = this.user() ?? null;
+    return isUserVerified(u) ? u!.uid : null;
   });
   readonly signedIn = computed(() => this.uid() !== null);
 
