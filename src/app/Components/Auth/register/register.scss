@@ -555,6 +555,36 @@ $transition:    all 0.3s ease;
   i { color: $secondary; font-size: 11px; }
 }
 
+.verify-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: $text-secondary;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: $border;
+  }
+}
+
+.verify-code {
+  display: flex;
+  gap: 10px;
+
+  &__input {
+    flex: 1;
+    text-align: center;
+    font-size: 18px;
+    letter-spacing: 0.35em;
+  }
+}
+
 // ─── RESPONSIVE ───────────────────────────────────────────
 @media (max-width: 768px) {
   .auth-page {

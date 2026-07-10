@@ -9,6 +9,8 @@ export const environment = {
     leadUrl: 'https://realsang-n8n.onrender.com/webhook/lead',
     adminAlertUrl: 'https://realsang-n8n.onrender.com/webhook/admin-alert',
     chatUrl: 'https://realsang-n8n.onrender.com/webhook/chat',
+    verifyRequestUrl: 'https://realsang-n8n.onrender.com/webhook/verify-request',
+    verifyConfirmUrl: 'https://realsang-n8n.onrender.com/webhook/verify-confirm',
   },
   firebase: {
     apiKey: 'AIzaSyAnMZlkNfLQHzBwWEy74VwclXBmsQr99FM',

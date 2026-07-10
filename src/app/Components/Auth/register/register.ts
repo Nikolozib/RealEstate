@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { take } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth';
 import { UserService } from '../../../core/services/user';
@@ -36,6 +36,14 @@ export class Register implements OnInit, OnDestroy {
   resendSuccess = false;
   resendError = '';
 
+  // Typed-code alternative to clicking the emailed link. The same email
+  // carries both; whichever the user completes first wins.
+  codeControl = new FormControl('', { nonNullable: true });
+  codeLoading = false;
+  codeError = '';
+
+  private registeredName = '';
+  private verifiedAlertSent = false;
   private pollInterval: any = null;
 
   @ViewChild('verifyCard') verifyCard?: ElementRef<HTMLElement>;
@@ -116,15 +124,13 @@ export class Register implements OnInit, OnDestroy {
           'Profile details could not be saved. You can complete them from Settings.';
       }
 
-      await this.authService.sendVerificationEmail(cred.user);
-
-      // Fire-and-forget owner notification — signup must succeed even if
-      // the alert webhook is down.
-      this.n8n
-        .sendAdminAlert('user_registered', `${displayName} <${email}> just created an account.`)
-        .catch(err => console.warn('Admin alert webhook failed:', err));
-
+      // Show the waiting card immediately and send the email in the
+      // background — the n8n instance can cold-start for ~50s and the user
+      // shouldn't stare at a frozen form meanwhile. The owner notification
+      // now fires after verification succeeds, not here.
       this.registeredEmail = email!;
+      this.registeredName = displayName!;
+      this.sendVerificationRequest(cred.user.uid, email!, displayName!);
       this.registrationComplete = true;
       this.scrollToVerifyCard();
 
@@ -200,18 +206,85 @@ export class Register implements OnInit, OnDestroy {
       return;
     }
 
-    // Resend is best-effort: Firebase throttles verification emails hard
-    // (auth/too-many-requests), one was already sent by the original signup,
-    // and landing back on the waiting screen matters more than the resend.
-    try {
-      await this.authService.sendVerificationEmail(cred.user);
-    } catch (e) {
-      console.warn('Verification resend failed:', e);
-    }
+    // Resend is best-effort: one email was already sent by the original
+    // signup, and landing back on the waiting screen matters more.
     this.registeredEmail = email!;
+    this.sendVerificationRequest(cred.user.uid, email!, '');
     this.registrationComplete = true;
     this.scrollToVerifyCard();
     this.startPolling();
+  }
+
+  // Sends the link+code verification email through n8n; if that workflow is
+  // unreachable, falls back to Firebase's own link-only email so the user is
+  // never stranded without any way to verify. Runs in the background — on
+  // total failure it surfaces through the resend error slot.
+  private async sendVerificationRequest(uid: string, email: string, displayName: string) {
+    try {
+      await this.n8n.requestVerification(uid, email, displayName);
+    } catch (n8nError) {
+      console.warn('n8n verification webhook failed, falling back to Firebase:', n8nError);
+      try {
+        const user = this.authService.getCurrentUser();
+        if (user) await this.authService.sendVerificationEmail(user);
+      } catch (firebaseError) {
+        console.warn('Firebase fallback email failed too:', firebaseError);
+        this.resendError =
+          'We could not send the verification email. Please use the resend button in a moment.';
+        this.cdr.detectChanges();
+      }
+    }
+  }
+
+  // The typed-code path: n8n checks the code and flips emailVerified via the
+  // admin API; a fresh reload of the user then reads as verified.
+  async confirmCode() {
+    const user = this.authService.getCurrentUser();
+    if (!user || this.codeLoading) return;
+
+    const code = this.codeControl.value.trim();
+    if (!/^\d{6}$/.test(code)) {
+      this.codeError = 'Enter the 6-digit code from the email.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.codeLoading = true;
+    this.codeError = '';
+    this.cdr.detectChanges();
+
+    try {
+      const verified = await this.n8n.confirmVerificationCode(user.uid, code);
+      if (!verified) {
+        this.codeError = 'That code is not right or has expired. Check the email and try again.';
+        return;
+      }
+      await this.authService.reloadCurrentUser();
+      this.completeVerification();
+    } catch (e) {
+      console.warn('Code confirmation failed:', e);
+      this.codeError =
+        'Could not check the code right now (the server may be waking up). Please try again.';
+    } finally {
+      this.codeLoading = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  // Single exit point for both paths (link click detected by polling, or a
+  // confirmed code): notify the owner exactly once, then head home.
+  private completeVerification() {
+    this.stopPolling();
+    if (!this.verifiedAlertSent) {
+      this.verifiedAlertSent = true;
+      const who = this.registeredName
+        ? `${this.registeredName} <${this.registeredEmail}>`
+        : this.registeredEmail;
+      this.n8n
+        .sendAdminAlert('user_verified', `${who} verified their account.`)
+        .catch(err => console.warn('Admin alert webhook failed:', err));
+    }
+    this.router.navigate(['/']);
   }
 
   // The "check your inbox" card replaces the registration form in place; if
@@ -230,8 +303,7 @@ export class Register implements OnInit, OnDestroy {
         await this.authService.reloadCurrentUser();
         const user = this.authService.getCurrentUser();
         if (user?.emailVerified) {
-          this.stopPolling();
-          this.router.navigate(['/']);
+          this.completeVerification();
         }
       } catch (e) {
         console.warn('Verification poll error:', e);
@@ -258,20 +330,35 @@ export class Register implements OnInit, OnDestroy {
     this.resendLoading = true;
     this.resendSuccess = false;
     this.resendError = '';
+    this.cdr.detectChanges();
 
     try {
-      await this.authService.sendVerificationEmail(user);
+      await this.n8n.requestVerification(
+        user.uid,
+        this.registeredEmail || user.email || '',
+        this.registeredName,
+      );
       this.resendSuccess = true;
       setTimeout(() => {
         this.resendSuccess = false;
         this.cdr.detectChanges();
       }, 4000);
-    } catch (e: any) {
-      console.warn('Resend failed:', e);
-      this.resendError =
-        e?.code === 'auth/too-many-requests'
-          ? 'Firebase is rate-limiting resends. The earlier email is still valid — check your spam folder, or wait a few minutes and try again.'
-          : 'Could not resend the email right now. Please try again in a moment.';
+    } catch (n8nError) {
+      console.warn('n8n resend failed, falling back to Firebase:', n8nError);
+      try {
+        await this.authService.sendVerificationEmail(user);
+        this.resendSuccess = true;
+        setTimeout(() => {
+          this.resendSuccess = false;
+          this.cdr.detectChanges();
+        }, 4000);
+      } catch (e: any) {
+        console.warn('Resend failed:', e);
+        this.resendError =
+          e?.code === 'auth/too-many-requests'
+            ? 'Resends are rate-limited. The earlier email is still valid — check your spam folder, or wait a few minutes and try again.'
+            : 'Could not resend the email right now. Please try again in a moment.';
+      }
     } finally {
       this.resendLoading = false;
       this.cdr.detectChanges();

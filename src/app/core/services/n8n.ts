@@ -70,6 +70,37 @@ export class N8nService {
     );
   }
 
+  // Asks the verification workflow to email the user a message containing
+  // BOTH a confirmation link and a 6-digit code. The workflow generates and
+  // stores the code and mints the link via the Identity Toolkit admin API.
+  requestVerification(uid: string, email: string, displayName: string): Promise<unknown> {
+    return firstValueFrom(
+      this.http
+        .post(
+          environment.n8n.verifyRequestUrl,
+          { uid, email, displayName, continueUrl: environment.siteUrl },
+          { headers: this.headers, context: this.context },
+        )
+        .pipe(timeout(N8nService.TIMEOUT_MS)),
+    );
+  }
+
+  // Submits a typed verification code. On a match the workflow flips
+  // emailVerified through the admin API and returns { verified: true } —
+  // the register page's polling then completes the flow.
+  async confirmVerificationCode(uid: string, code: string): Promise<boolean> {
+    const res = await firstValueFrom(
+      this.http
+        .post<{ verified: boolean }>(
+          environment.n8n.verifyConfirmUrl,
+          { uid, code },
+          { headers: this.headers, context: this.context },
+        )
+        .pipe(timeout(N8nService.TIMEOUT_MS)),
+    );
+    return res?.verified === true;
+  }
+
   // Synchronous chat round-trip. `history` must be the full prior
   // conversation (the workflow uses it for context); the new message goes
   // in `message`, not in the history.

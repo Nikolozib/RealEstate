@@ -4,16 +4,18 @@ import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { Chatbot } from './chatbot';
 import { AuthService } from '../../../core/services/auth';
+import { N8nService } from '../../../core/services/n8n';
 
 const verifiedUser = { uid: 'test-uid', emailVerified: true };
 
-function setup(user: unknown = verifiedUser) {
+function setup(user: unknown = verifiedUser, n8n?: Partial<N8nService>) {
   TestBed.configureTestingModule({
     imports: [Chatbot],
     providers: [
       provideHttpClient(),
       provideRouter([]),
       { provide: AuthService, useValue: { currentUser$: of(user) } },
+      ...(n8n ? [{ provide: N8nService, useValue: n8n }] : []),
     ],
   });
   return TestBed.createComponent(Chatbot);
@@ -65,6 +67,32 @@ describe('Chatbot', () => {
     const other = setup({ uid: 'other-uid', emailVerified: true }).componentInstance;
     other.toggle();
     expect(other.messages().some(m => m.content === 'my secret question')).toBe(false);
+  });
+
+  it('should serve repeated opening questions from the cache', async () => {
+    let webhookCalls = 0;
+    const n8nMock = {
+      chat: async () => {
+        webhookCalls++;
+        return 'We cover all of Georgia.';
+      },
+    } as unknown as Partial<N8nService>;
+
+    const first = setup(verifiedUser, n8nMock).componentInstance;
+    first.toggle();
+    first.draft = 'What areas do you cover?';
+    await first.send();
+    expect(webhookCalls).toBe(1);
+
+    // A different user asking the same opening question gets the cached
+    // answer without another webhook round-trip.
+    TestBed.resetTestingModule();
+    const second = setup({ uid: 'other-uid', emailVerified: true }, n8nMock).componentInstance;
+    second.toggle();
+    second.draft = 'What areas do you cover?';
+    await second.send();
+    expect(webhookCalls).toBe(1);
+    expect(second.messages().at(-1)?.content).toBe('We cover all of Georgia.');
   });
 
   it('should linkify listing URLs with a friendly label', () => {

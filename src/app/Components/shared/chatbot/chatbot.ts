@@ -22,6 +22,13 @@ const GREETING =
 const SESSION_KEY_PREFIX = 'rs-chat-session:';
 const HISTORY_KEY_PREFIX = 'rs-chat-history:';
 
+// Answer cache for conversation-opening questions (shared across users —
+// FAQ answers aren't personal). Short TTL because the bot recommends
+// listings, and those change without notice.
+const CACHE_KEY = 'rs-chat-cache';
+const CACHE_TTL_MS = 60 * 60 * 1000;
+const CACHE_MAX_ENTRIES = 50;
+
 // After this long without a reply, the thinking indicator switches to a
 // reassurance message — the n8n instance cold-starts in ~50s, and users
 // otherwise assume the bot is broken.
@@ -100,12 +107,28 @@ export class Chatbot {
     const text = (retryText ?? this.draft).trim();
     if (!text || this.typing() || !this.signedIn()) return;
 
+    // Only conversation-opening questions hit the cache — a follow-up's
+    // answer depends on context a shared question→answer cache can't hold.
+    const standalone = !this.messages().some(m => m.role === 'user');
+    const cacheKey = text.toLowerCase().replace(/\s+/g, ' ');
+
     this.failed.set(false);
     if (!retryText) {
       this.messages.update(m => [...m, { role: 'user', content: text }]);
       this.draft = '';
       this.persist();
     }
+
+    if (standalone) {
+      const cached = this.cacheGet(cacheKey);
+      if (cached) {
+        this.messages.update(m => [...m, { role: 'assistant', content: cached }]);
+        this.persist();
+        this.scrollToBottom();
+        return;
+      }
+    }
+
     this.typing.set(true);
     this.slowReply.set(false);
     this.slowTimer = setTimeout(() => this.slowReply.set(true), SLOW_REPLY_MS);
@@ -117,6 +140,7 @@ export class Chatbot {
       const history = this.messages().slice(0, -1);
       const reply = await this.n8n.chat(this.sessionId, text, history);
       this.messages.update(m => [...m, { role: 'assistant', content: reply }]);
+      if (standalone) this.cacheSet(cacheKey, reply);
       this.persist();
     } catch (err) {
       console.warn('Chat webhook failed:', err);
@@ -127,6 +151,36 @@ export class Chatbot {
       this.typing.set(false);
       this.slowReply.set(false);
       this.scrollToBottom();
+    }
+  }
+
+  private cacheGet(question: string): string | null {
+    if (!this.isBrowser) return null;
+    try {
+      const cache = JSON.parse(localStorage.getItem(CACHE_KEY) ?? '{}');
+      const entry = cache[question];
+      if (entry && Date.now() - entry.t < CACHE_TTL_MS) return entry.a;
+    } catch {
+      // Corrupt or unavailable cache is never worth an error.
+    }
+    return null;
+  }
+
+  private cacheSet(question: string, answer: string): void {
+    if (!this.isBrowser) return;
+    try {
+      const cache = JSON.parse(localStorage.getItem(CACHE_KEY) ?? '{}');
+      cache[question] = { a: answer, t: Date.now() };
+      const keys = Object.keys(cache);
+      if (keys.length > CACHE_MAX_ENTRIES) {
+        keys
+          .sort((x, y) => cache[x].t - cache[y].t)
+          .slice(0, keys.length - CACHE_MAX_ENTRIES)
+          .forEach(k => delete cache[k]);
+      }
+      localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+    } catch {
+      // Best-effort only.
     }
   }
 

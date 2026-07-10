@@ -229,7 +229,6 @@
             </div>
           }
 
-          <!-- Resend is the only action available -->
           <button
             class="btn btn--ghost btn--full"
             (click)="resendVerification()"
@@ -241,6 +240,42 @@
               <i class="fa-solid fa-rotate-right"></i> Resend verification email
             }
           </button>
+
+          <!-- The email also carries a 6-digit code — typing it here is
+               equivalent to clicking the link -->
+          <div class="verify-divider"><span>or enter the code</span></div>
+
+          <div class="verify-code">
+            <input
+              type="text"
+              class="form-input verify-code__input"
+              [formControl]="codeControl"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              maxlength="6"
+              placeholder="••••••"
+              aria-label="6-digit verification code"
+            />
+            <button
+              class="btn btn--primary"
+              type="button"
+              (click)="confirmCode()"
+              [disabled]="codeLoading"
+            >
+              @if (codeLoading) {
+                <i class="fa-solid fa-spinner fa-spin"></i>
+              } @else {
+                Confirm
+              }
+            </button>
+          </div>
+
+          @if (codeError) {
+            <div class="auth-card__error" role="alert">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              {{ codeError }}
+            </div>
+          }
 
           <p class="verify-footnote">
             <i class="fa-solid fa-triangle-exclamation"></i>
