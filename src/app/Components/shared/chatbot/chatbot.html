@@ -24,7 +24,11 @@
         @for (msg of messages(); track $index) {
           <div class="chatbot__msg" [class.chatbot__msg--user]="msg.role === 'user'">
             @for (part of linkify(msg.content); track $index) {
-              @if (part.href) {
+              @if (part.href && part.path) {
+                <a class="chatbot__link" [href]="part.href" (click)="openLink($event, part.path)">
+                  {{ part.text }} <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                </a>
+              } @else if (part.href) {
                 <a class="chatbot__link" [href]="part.href" target="_blank" rel="noopener">
                   {{ part.text }} <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
                 </a>

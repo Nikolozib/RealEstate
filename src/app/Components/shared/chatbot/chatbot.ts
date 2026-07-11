@@ -10,10 +10,12 @@ import {
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ChatMessage, N8nService } from '../../../core/services/n8n';
 import { AuthService } from '../../../core/services/auth';
+import { environment } from '../../../environment/environment';
 
 const GREETING =
   "Hello! I'm the RealSang assistant. Ask me anything about buying, renting, " +
@@ -48,14 +50,28 @@ const SLOW_REPLY_MS = 8_000;
 export class Chatbot {
   private n8n = inject(N8nService);
   private auth = inject(AuthService);
+  private router = inject(Router);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
-  private readonly user = toSignal(this.auth.currentUser$);
+  // Hosts whose links the widget navigates in-app instead of opening a new
+  // tab. The configured site host covers bot replies that always use the
+  // production origin; the current host covers whatever origin the app is
+  // actually served from (localhost, previews).
+  private readonly internalHosts = new Set(
+    [new URL(environment.siteUrl).host, this.isBrowser ? location.host : null].filter(
+      (h): h is string => !!h,
+    ),
+  );
+
   // Unverified sessions count as signed-out, matching the rest of the UI.
-  private readonly uid = computed(() => {
-    const u = this.user();
-    return u && u.emailVerified ? u.uid : null;
-  });
+  // The verified check must happen inside the pipe, per emission: Firebase
+  // flips emailVerified by mutating the user object in place and then
+  // re-emits that same reference, which a signal would drop as "unchanged"
+  // — a computed() over the raw user object never re-runs after verification.
+  private readonly uid = toSignal(
+    this.auth.currentUser$.pipe(map(u => (u && u.emailVerified ? u.uid : null))),
+    { initialValue: null },
+  );
   readonly signedIn = computed(() => this.uid() !== null);
 
   readonly open = signal(false);
@@ -232,8 +248,10 @@ export class Chatbot {
   // Splits a message into text and link segments so the template can render
   // URLs as real anchors (the bot recommends listings by link). Trailing
   // punctuation stays outside the link so "…/listings/abc." doesn't 404.
-  linkify(content: string): { text: string; href?: string }[] {
-    const parts: { text: string; href?: string }[] = [];
+  // Links into this site also carry `path`, so clicks become in-app router
+  // navigations (the chat panel survives them) instead of opening a new tab.
+  linkify(content: string): { text: string; href?: string; path?: string }[] {
+    const parts: { text: string; href?: string; path?: string }[] = [];
     const urlPattern = /https?:\/\/[^\s]+/g;
     let cursor = 0;
     for (const match of content.matchAll(urlPattern)) {
@@ -243,10 +261,32 @@ export class Chatbot {
       parts.push({
         text: url.includes('/listings/') ? 'View listing' : url.replace(/^https?:\/\//, ''),
         href: url,
+        path: this.toInternalPath(url),
       });
       cursor = index + url.length;
     }
     if (cursor < content.length) parts.push({ text: content.slice(cursor) });
     return parts;
+  }
+
+  private toInternalPath(url: string): string | undefined {
+    try {
+      const parsed = new URL(url);
+      if (this.internalHosts.has(parsed.host)) {
+        return parsed.pathname + parsed.search + parsed.hash;
+      }
+    } catch {
+      // Not a parseable URL — leave it as a plain external href.
+    }
+    return undefined;
+  }
+
+  // In-app links keep their real href (right-click, ctrl/middle-click still
+  // open tabs), but a plain click routes through the SPA so the page swaps
+  // underneath while the chat panel stays open.
+  openLink(event: MouseEvent, path: string): void {
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return;
+    event.preventDefault();
+    this.router.navigateByUrl(path);
   }
 }

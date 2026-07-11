@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { provideRouter, Router } from '@angular/router';
+import { BehaviorSubject, of } from 'rxjs';
 import { Chatbot } from './chatbot';
 import { AuthService } from '../../../core/services/auth';
 import { N8nService } from '../../../core/services/n8n';
@@ -51,6 +51,29 @@ describe('Chatbot', () => {
   it('should treat unverified users as signed out', () => {
     const component = setup({ uid: 'u2', emailVerified: false }).componentInstance;
     expect(component.signedIn()).toBe(false);
+  });
+
+  // Firebase flips emailVerified by mutating the user object in place and
+  // later re-emits that SAME reference (token refresh). A reference-equality
+  // signal over the raw user would drop that emission as unchanged and keep
+  // the chatbot locked forever after verification.
+  it('should unlock when the same user object is re-emitted after verification', () => {
+    const mutableUser = { uid: 'u3', emailVerified: false };
+    const user$ = new BehaviorSubject<unknown>(mutableUser);
+    TestBed.configureTestingModule({
+      imports: [Chatbot],
+      providers: [
+        provideHttpClient(),
+        provideRouter([]),
+        { provide: AuthService, useValue: { currentUser$: user$ } },
+      ],
+    });
+    const component = TestBed.createComponent(Chatbot).componentInstance;
+    expect(component.signedIn()).toBe(false);
+
+    mutableUser.emailVerified = true;
+    user$.next(mutableUser);
+    expect(component.signedIn()).toBe(true);
   });
 
   it('should keep conversations separate per user', () => {
@@ -110,5 +133,31 @@ describe('Chatbot', () => {
   it('should return plain text untouched', () => {
     const component = setup().componentInstance;
     expect(component.linkify('No links here.')).toEqual([{ text: 'No links here.' }]);
+  });
+
+  it('should mark links into this site as internal router paths', () => {
+    const component = setup().componentInstance;
+    const parts = component.linkify('See http://localhost:4200/listings/xyz today');
+    expect(parts[1].path).toBe('/listings/xyz');
+    // Links to other sites stay external (no in-app path).
+    const external = component.linkify('Docs at https://example.com/page');
+    expect(external[1].path).toBeUndefined();
+  });
+
+  it('should navigate in-app on plain click but leave modified clicks native', () => {
+    const component = setup().componentInstance;
+    const router = TestBed.inject(Router);
+    const nav = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+
+    const click = new MouseEvent('click', { button: 0, cancelable: true });
+    component.openLink(click, '/listings/xyz');
+    expect(nav).toHaveBeenCalledWith('/listings/xyz');
+    expect(click.defaultPrevented).toBe(true);
+
+    // Ctrl+click keeps the browser's open-in-new-tab behavior.
+    const ctrlClick = new MouseEvent('click', { button: 0, ctrlKey: true, cancelable: true });
+    component.openLink(ctrlClick, '/listings/xyz');
+    expect(ctrlClick.defaultPrevented).toBe(false);
+    expect(nav).toHaveBeenCalledTimes(1);
   });
 });

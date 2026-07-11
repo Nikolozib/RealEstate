@@ -41,11 +41,21 @@ export class AuthService {
     return this.auth.currentUser;
   }
 
-  // Fetches a fresh token from Firebase so emailVerified is up-to-date.
-  // Must be called before reading currentUser.emailVerified.
-  reloadCurrentUser(): Promise<void> {
+  // Fetches a fresh account record from Firebase so emailVerified is
+  // up-to-date. Must be called before reading currentUser.emailVerified.
+  async reloadCurrentUser(): Promise<void> {
     const u = this.auth.currentUser;
-    return u ? u.reload() : Promise.resolve();
+    if (!u) return;
+    const wasVerified = u.emailVerified;
+    await u.reload();
+    // reload() mutates the user object in place without notifying auth-state
+    // subscribers, so currentUser$ consumers (header, chatbot) would keep the
+    // stale unverified snapshot until the hourly token refresh. When reload
+    // reveals the verification flip, force a refresh so the stream re-emits
+    // now — and the new ID token carries the email_verified claim too.
+    if (!wasVerified && u.emailVerified) {
+      await u.getIdToken(true);
+    }
   }
 
   sendVerificationEmail(firebaseUser: FirebaseUser): Promise<void> {
