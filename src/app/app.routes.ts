@@ -5,7 +5,6 @@ import { guestGuard } from './core/guards/guest-guard';
 import { propertyResolver } from './core/guards/property-resolver';
 
 export const routes: Routes = [
-  // Public — no login required
   {
     path: '',
     loadComponent: () => import('./Components/home/home').then(m => m.Home),
@@ -58,7 +57,6 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
 
-  // Admin only
   {
     path: 'admin',
     loadComponent: () => import('./Components/admin/admin').then(m => m.Admin),

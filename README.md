@@ -36,16 +36,19 @@ to a different domain.
 Firebase config values (`apiKey`, `authDomain`, etc.) are public client identifiers, not secrets —
 safe to commit. Get them from **Firebase Console → Project Settings → General → Your apps**.
 
-### 3. Deploy Firestore/Storage security rules
+### 3. Deploy Firestore/Storage security rules and indexes
 
-Rules live in `firestore.rules` and `storage.rules` at the repo root, referenced by `firebase.json`.
-Deploy them with the [Firebase CLI](https://firebase.google.com/docs/cli):
+Rules live in `firestore.rules` and `storage.rules`, composite indexes in `firestore.indexes.json`,
+all at the repo root and referenced by `firebase.json`. The listings page combines several optional
+filters, and each combination needs its own composite index — deploying the rules without the
+indexes will make filtered queries fail in production. Deploy both with the
+[Firebase CLI](https://firebase.google.com/docs/cli):
 
 ```bash
 npm install -g firebase-tools
 firebase login
 firebase use --add        # select this project once
-firebase deploy --only firestore:rules,storage:rules
+firebase deploy --only firestore:rules,storage:rules,firestore:indexes
 ```
 
 ### 4. Run the dev server
@@ -100,8 +103,11 @@ browser as `POST` webhooks with an `X-Webhook-Token` header:
 
 URLs and the token live in `src/app/environment/environment*.ts` under `n8n`. The token is a
 public client-side identifier (like the Firebase config), not a secret. The n8n server runs on
-Render's free tier — a cold start can delay a response by ~50s, so the client uses a 90s timeout
-and the chatbot shows a retry prompt on failure.
+Render's free tier — a cold start typically delays a response by ~50s but can occasionally run
+longer, so the client uses a 120s timeout and the chatbot shows a retry prompt on failure.
+`.github/workflows/keep-n8n-warm.yml` pings the instance once daily to keep it from sitting fully
+idle for very long stretches (it does not prevent cold starts for regular traffic — only Render's
+paid tier removes spin-down entirely).
 
 ## Deployment (Netlify)
 

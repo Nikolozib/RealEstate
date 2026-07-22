@@ -1,15 +1,15 @@
 name: Keep n8n warm
 
-# Render's free tier spins the n8n instance down after ~15 min of no traffic,
-# which made the chatbot/lead/verification webhooks look "broken" whenever a
-# cold start ran longer than the client's request timeout. Pinging the plain
-# root URL every 10 minutes keeps the dyno awake without ever invoking a real
-# workflow (no fake leads, no wasted Pinecone lookups) — GitHub's schedule
-# trigger isn't minute-precise, so this is a best-effort keep-warm, not a
-# guarantee.
+# Render's free tier spins the n8n instance down after ~15 min of no traffic.
+# This ping runs once daily rather than continuously, so it does not keep the
+# instance warm around the clock — cold starts (and the ~50-120s wait they
+# cause) still happen for real user traffic between pings. It only prevents
+# the instance from sitting fully idle for very long stretches. Pings the
+# plain root URL, not a real webhook, so it never creates fake leads or
+# wasted Pinecone lookups.
 on:
   schedule:
-    - cron: '*/10 * * * *'
+    - cron: '0 6 * * *'
   workflow_dispatch: {}
 
 jobs:

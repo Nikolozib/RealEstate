@@ -139,7 +139,6 @@ export class Profile implements OnInit {
         displayName: displayName!,
         phone: phone ?? '',
       });
-      // Update local state so the hero updates immediately
       if (this.user) {
         this.user.displayName = displayName!;
         this.user.phone = phone ?? '';

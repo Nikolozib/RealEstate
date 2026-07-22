@@ -123,10 +123,8 @@ export class Admin implements OnInit {
   async loadData() {
     this.loading = true;
     try {
-      // Single getDocs call — no persistent listener
       this.properties = await this.propertyService.getAllPropertiesForAdmin();
 
-      // Inquiries: keep existing Observable but complete it immediately
       this.inquiries = await firstValueFrom(
         this.inquiryService.getInquiriesByAgent('').pipe(take(1))
       );
@@ -342,7 +340,6 @@ export class Admin implements OnInit {
       this.toast.success(this.formSuccess);
       this.formMode = null;
       this.editingId = null;
-      // Reload the list so the new/updated item appears immediately
       await this.loadData();
       setTimeout(() => (this.formSuccess = ''), 3000);
     } catch (e) {
@@ -365,7 +362,6 @@ export class Admin implements OnInit {
     try {
       await this.propertyService.deleteProperty(id);
       this.deleteConfirmId = null;
-      // Remove locally for instant feedback, then reload to sync
       this.properties = this.properties.filter(p => p.id !== id);
       this.formSuccess = 'Property deleted.';
       this.toast.success(this.formSuccess);
@@ -378,7 +374,6 @@ export class Admin implements OnInit {
 
   async markInquiryRead(id: string) {
     await this.inquiryService.updateInquiryStatus(id, 'read');
-    // Update locally so the UI reflects the change without a full reload
     const inq = this.inquiries.find(i => i.id === id);
     if (inq) inq.status = 'read';
   }
