@@ -30,10 +30,12 @@ export interface ChatMessage {
 export class N8nService {
   private http = inject(HttpClient);
 
-  // The n8n instance runs on Render's free tier — a cold start can hold a
-  // request for ~50s, so anything shorter would fail exactly when the
-  // server is waking up.
-  private static readonly TIMEOUT_MS = 90_000;
+  // The n8n instance runs on Render's free tier — a cold start typically
+  // holds a request for ~50s, but a workflow that also waits on Pinecone or
+  // other lookups on top of the wake-up can occasionally run well past that.
+  // Generous headroom here avoids surfacing a false "unreachable" error for
+  // what's really just a slow-but-successful cold start.
+  private static readonly TIMEOUT_MS = 120_000;
 
   private readonly headers = { 'X-Webhook-Token': environment.n8n.token };
 

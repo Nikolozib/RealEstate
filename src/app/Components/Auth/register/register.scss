@@ -196,6 +196,12 @@ $transition:    all 0.3s ease;
   }
 }
 
+.auth-card__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;

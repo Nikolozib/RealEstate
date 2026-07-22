@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
 import { provideAuth, getAuth } from '@angular/fire/auth';
 import { provideFirestore, getFirestore } from '@angular/fire/firestore';
+import { provideStorage, getStorage } from '@angular/fire/storage';
 import { environment } from '../../environment/environment';
 import { routes } from '../../app.routes';
 
@@ -29,9 +30,10 @@ function activatedRouteStub(options: RouteStubOptions = {}) {
   };
 }
 
-// Every component/service under core/services touches AngularFire, so this
-// is the minimal provider set that satisfies DI without hitting the
-// network — use it as the `providers` array in any component spec.
+// Every component/service under core/services touches AngularFire (Auth,
+// Firestore, or Storage), so this is the minimal provider set that satisfies
+// DI without hitting the network — use it as the `providers` array in any
+// component spec.
 export function firebaseTestProviders(routeOptions: RouteStubOptions = {}): (Provider | EnvironmentProviders)[] {
   return [
     provideRouter(routes),
@@ -39,6 +41,7 @@ export function firebaseTestProviders(routeOptions: RouteStubOptions = {}): (Pro
     provideFirebaseApp(() => initializeApp(environment.firebase)),
     provideAuth(() => getAuth()),
     provideFirestore(() => getFirestore()),
+    provideStorage(() => getStorage()),
     { provide: ActivatedRoute, useValue: activatedRouteStub(routeOptions) },
   ];
 }

@@ -36,6 +36,9 @@
                 {{ part.text }}
               }
             }
+            @if (streamingIndex() === $index) {
+              <span class="chatbot__cursor" aria-hidden="true"></span>
+            }
           </div>
         }
 
@@ -48,7 +51,7 @@
             </span>
             <span class="chatbot__thinking-text">
               @if (slowReply()) {
-                Still thinking — waking the assistant up can take a minute…
+                Still thinking — waking the assistant up can take a minute or two…
               } @else {
                 Thinking…
               }

@@ -79,6 +79,11 @@ export class Chatbot {
   readonly typing = signal(false);
   readonly slowReply = signal(false);
   readonly failed = signal(false);
+  // Index of the message currently being revealed word-by-word, or -1 when
+  // nothing is streaming. The webhook returns the full reply in one shot —
+  // this is a client-side illusion of streaming so replies feel like they're
+  // arriving live instead of appearing in one jump after a long wait.
+  readonly streamingIndex = signal(-1);
 
   draft = '';
   private loadedUid: string | null = null;
@@ -155,7 +160,10 @@ export class Chatbot {
       // being answered travels separately in `message`.
       const history = this.messages().slice(0, -1);
       const reply = await this.n8n.chat(this.sessionId, text, history);
-      this.messages.update(m => [...m, { role: 'assistant', content: reply }]);
+      clearTimeout(this.slowTimer);
+      this.typing.set(false);
+      this.slowReply.set(false);
+      await this.streamIn(reply);
       if (standalone) this.cacheSet(cacheKey, reply);
       this.persist();
     } catch (err) {
@@ -168,6 +176,35 @@ export class Chatbot {
       this.slowReply.set(false);
       this.scrollToBottom();
     }
+  }
+
+  // Reveals `content` word-by-word in a freshly-appended assistant message,
+  // instead of setting it all at once. The reply already fully arrived from
+  // n8n — this only changes how it's painted, so it's a perceived-speed
+  // trick: the user starts reading immediately rather than staring at the
+  // thinking indicator for the whole round-trip and then getting a wall of
+  // text. Respects prefers-reduced-motion by skipping straight to the end.
+  private async streamIn(content: string): Promise<void> {
+    const index = this.messages().length;
+    this.messages.update(m => [...m, { role: 'assistant', content: '' }]);
+
+    const reduceMotion =
+      this.isBrowser && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) {
+      this.messages.update(m => m.map((msg, i) => (i === index ? { ...msg, content } : msg)));
+      return;
+    }
+
+    this.streamingIndex.set(index);
+    const words = content.split(/(\s+)/); // keep whitespace so spacing survives
+    let shown = '';
+    for (const word of words) {
+      shown += word;
+      this.messages.update(m => m.map((msg, i) => (i === index ? { ...msg, content: shown } : msg)));
+      this.scrollToBottom();
+      await new Promise(resolve => setTimeout(resolve, 16 + Math.random() * 24));
+    }
+    this.streamingIndex.set(-1);
   }
 
   private cacheGet(question: string): string | null {

@@ -42,7 +42,7 @@
         <div class="detail__gallery" data-aos="fade-up">
           <div class="detail__gallery-main" (click)="openLightbox(activeImage)">
             @if (activeImage) {
-              <img [ngSrc]="activeImage" [alt]="property.title" class="detail__gallery-img" fill priority />
+              <img [ngSrc]="activeImage" [alt]="property.title" class="detail__gallery-img" fill priority sizes="(max-width: 768px) 100vw, 800px" />
             }
             <div class="detail__gallery-zoom">
               <i class="fa-solid fa-magnifying-glass-plus"></i>

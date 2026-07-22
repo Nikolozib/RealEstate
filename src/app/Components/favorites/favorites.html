@@ -53,7 +53,7 @@
 
             <a [routerLink]="['/listings', property.id]" class="property-card__img-wrap">
               @if (property.thumbnailUrl) {
-                <img [ngSrc]="property.thumbnailUrl" [alt]="property.title" class="property-card__img" fill loading="lazy" />
+                <img [ngSrc]="property.thumbnailUrl" [alt]="property.title" class="property-card__img" fill sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw" loading="lazy" />
               }
               <span class="property-card__badge" [class.rent]="property.priceType === 'rent'">
                 {{ property.priceType === 'rent' ? 'For Rent' : 'For Sale' }}

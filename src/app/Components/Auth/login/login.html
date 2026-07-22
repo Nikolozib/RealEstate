@@ -50,7 +50,7 @@
             </div>
           }
 
-          <form [formGroup]="loginForm" (ngSubmit)="login()">
+          <form class="auth-card__form" [formGroup]="loginForm" (ngSubmit)="login()">
             <div class="form-group">
               <label class="form-label">Email Address</label>
               <div class="form-input-wrap">
@@ -123,7 +123,7 @@
               </div>
             }
 
-            <form [formGroup]="resetForm" (ngSubmit)="sendResetEmail()">
+            <form class="auth-card__form" [formGroup]="resetForm" (ngSubmit)="sendResetEmail()">
               <div class="form-group">
                 <label class="form-label">Email Address</label>
                 <div class="form-input-wrap">

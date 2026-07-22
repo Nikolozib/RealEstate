@@ -251,6 +251,12 @@ $transition:    all 0.3s ease;
 }
 
 // ─── FORM ─────────────────────────────────────────────────
+.auth-card__form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;

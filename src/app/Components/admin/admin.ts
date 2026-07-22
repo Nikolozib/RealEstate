@@ -10,6 +10,7 @@ import { PropertyService } from '../../core/services/property';
 import { InquiryService } from '../../core/services/inquiry';
 import { SeoService } from '../../core/services/seo';
 import { ToastService } from '../../core/services/toast';
+import { StorageService } from '../../core/services/storage';
 import { Property } from '../../core/services/models/property.model';
 import { Inquiry } from '../../core/services/models/inquiry.model';
 import { serverTimestamp } from '@angular/fire/firestore';
@@ -50,6 +51,9 @@ export class Admin implements OnInit {
   deleteConfirmId: string | null = null;
 
   features: string[] = [];
+  images: string[] = [];
+  thumbnailUploading = false;
+  galleryUploading = false;
 
   propertyTypes = ['apartment', 'house', 'villa', 'commercial', 'land'];
   priceTypes = ['sale', 'rent'];
@@ -90,6 +94,7 @@ export class Admin implements OnInit {
     private inquiryService: InquiryService,
     private seo: SeoService,
     private toast: ToastService,
+    private storageService: StorageService,
     private router: Router,
     private cdr: ChangeDetectorRef,
   ) {}
@@ -183,6 +188,7 @@ export class Admin implements OnInit {
       isFeatured: false,
     });
     this.features = [];
+    this.images = [];
     this.editingId = null;
     this.formMode = 'add';
     this.formError = '';
@@ -215,6 +221,7 @@ export class Admin implements OnInit {
       isFeatured: property.isFeatured,
     });
     this.features = [...(property.features || [])];
+    this.images = [...(property.images || [])];
     this.editingId = property.id ?? null;
     this.formMode = 'edit';
     this.formError = '';
@@ -241,6 +248,54 @@ export class Admin implements OnInit {
     return this.features.includes(feature);
   }
 
+  // Compresses (resize + WebP re-encode) in the browser, then uploads to
+  // Firebase Storage — see core/utils/image-compress.ts and
+  // core/services/storage.ts. Only the resulting download URL ever touches
+  // Firestore; the original file never leaves compressed.
+  async onThumbnailSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = ''; // allow re-selecting the same file later
+    if (!file) return;
+
+    this.thumbnailUploading = true;
+    try {
+      const url = await this.storageService.uploadPropertyImage(file);
+      this.propertyForm.patchValue({ thumbnailUrl: url });
+    } catch (e) {
+      this.toast.error('Failed to upload image. Please try again.');
+    } finally {
+      this.thumbnailUploading = false;
+    }
+  }
+
+  async onGalleryFilesSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    input.value = '';
+    if (!files.length) return;
+
+    this.galleryUploading = true;
+    try {
+      // Sequential, not Promise.all: keeps memory bounded (each compress
+      // step holds a full-size decoded bitmap) when an admin selects a
+      // dozen photos from a phone at once.
+      for (const file of files) {
+        const url = await this.storageService.uploadPropertyImage(file);
+        this.images.push(url);
+      }
+    } catch (e) {
+      this.toast.error('Some images failed to upload. Please try again.');
+    } finally {
+      this.galleryUploading = false;
+    }
+  }
+
+  removeGalleryImage(index: number): void {
+    const [removed] = this.images.splice(index, 1);
+    if (removed) this.storageService.deletePropertyImage(removed);
+  }
+
   async saveProperty() {
     if (this.propertyForm.invalid) {
       this.propertyForm.markAllAsTouched();
@@ -265,7 +320,7 @@ export class Admin implements OnInit {
       totalFloors: Number(formValue.totalFloors),
       yearBuilt: Number(formValue.yearBuilt),
       parkingSpots: Number(formValue.parkingSpots),
-      images: [] as string[],
+      images: this.images,
       coordinates: { lat: 41.6938, lng: 44.8015 },
       agentId: this.authService.getCurrentUser()?.uid ?? '',
       views: this.formMode === 'add' ? 0 : (existingProp?.views ?? 0),
