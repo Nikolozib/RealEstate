@@ -50,6 +50,21 @@
             </div>
           }
 
+          <button
+            type="button"
+            class="btn btn--google btn--full"
+            (click)="continueWithGoogle()"
+            [disabled]="googleLoading"
+          >
+            @if (googleLoading) {
+              <i class="fa-solid fa-spinner fa-spin"></i> Connecting…
+            } @else {
+              <i class="fa-brands fa-google"></i> Continue with Google
+            }
+          </button>
+
+          <div class="auth-card__divider"><span>or sign in with email</span></div>
+
           <form class="auth-card__form" [formGroup]="loginForm" (ngSubmit)="login()">
             <div class="form-group">
               <label class="form-label">Email Address</label>

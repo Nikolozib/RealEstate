@@ -23,8 +23,8 @@ npm install
 
 ### 2. Configure Firebase
 
-The app expects a Firebase project with **Authentication** (Email/Password provider) and
-**Firestore** enabled. Firebase web config lives in:
+The app expects a Firebase project with **Authentication** (Email/Password **and Google**
+providers) and **Firestore** enabled. Firebase web config lives in:
 
 - `src/app/environment/environment.ts` — development
 - `src/app/environment/environment.prod.ts` — production build (swapped in via `angular.json`
@@ -35,6 +35,12 @@ to a different domain.
 
 Firebase config values (`apiKey`, `authDomain`, etc.) are public client identifiers, not secrets —
 safe to commit. Get them from **Firebase Console → Project Settings → General → Your apps**.
+
+The "Continue with Google" button on the sign-in and register pages needs two things set in
+**Firebase Console → Authentication**: the **Google** provider enabled under *Sign-in method*, and
+every domain the app is served from (`localhost` and the deployed host) listed under
+*Settings → Authorized domains*. Google accounts arrive with `emailVerified` already true, so they
+skip the n8n link/code verification flow entirely and land straight on the home page.
 
 ### 3. Deploy Firestore/Storage security rules and indexes
 

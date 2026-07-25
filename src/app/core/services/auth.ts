@@ -7,6 +7,8 @@ import {
   sendEmailVerification,
   sendPasswordResetEmail,
   EmailAuthProvider,
+  GoogleAuthProvider,
+  signInWithPopup,
   reauthenticateWithCredential,
   updatePassword,
   user,
@@ -31,6 +33,22 @@ export class AuthService {
 
   login(email: string, password: string) {
     return signInWithEmailAndPassword(this.auth, email, password);
+  }
+
+  // Google accounts arrive with emailVerified already true, so this path
+  // deliberately skips the n8n link/code verification flow — Google has
+  // already proven the address belongs to the person signing in.
+  //
+  // Popup rather than redirect: the site is served from a different origin
+  // than the Firebase authDomain, and browser storage partitioning breaks
+  // signInWithRedirect in that setup.
+  signInWithGoogle() {
+    const provider = new GoogleAuthProvider();
+    // Force the account chooser — otherwise a browser signed into exactly
+    // one Google account reuses it silently, which is surprising on a
+    // shared machine.
+    provider.setCustomParameters({ prompt: 'select_account' });
+    return signInWithPopup(this.auth, provider);
   }
 
   logout() {

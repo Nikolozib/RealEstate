@@ -2,8 +2,11 @@ import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth';
+import { UserService } from '../../../core/services/user';
+import { N8nService } from '../../../core/services/n8n';
 import { SeoService } from '../../../core/services/seo';
 import { emailValidator } from '../../../core/utils/form-validators';
+import { googleAuthErrorMessage } from '../../../core/utils/auth-errors';
 
 @Component({
   selector: 'app-login',
@@ -16,6 +19,7 @@ export class Login {
   private fb = inject(FormBuilder);
 
   loading = false;
+  googleLoading = false;
   error = '';
   showPassword = false;
 
@@ -35,6 +39,8 @@ export class Login {
 
   constructor(
     private authService: AuthService,
+    private userService: UserService,
+    private n8n: N8nService,
     private router: Router,
     private cdr: ChangeDetectorRef,
     seo: SeoService,
@@ -80,6 +86,49 @@ export class Login {
       // Angular's change-detection scheduler, so without this the UI would
       // only refresh once some unrelated event (a scroll, a click) happened
       // to trigger a tick elsewhere.
+      this.cdr.detectChanges();
+    }
+  }
+
+  // The same button doubles as sign-up: a Google account that has never
+  // used the site gets its profile created here, so there is no "no account
+  // found" dead end to route around.
+  async continueWithGoogle() {
+    if (this.googleLoading) return;
+
+    this.googleLoading = true;
+    this.error = '';
+    this.cdr.detectChanges();
+
+    try {
+      const cred = await this.authService.signInWithGoogle();
+
+      let isNewAccount = false;
+      try {
+        isNewAccount = await this.userService.ensureUserDocument(cred.user.uid, {
+          displayName: cred.user.displayName ?? '',
+          email: cred.user.email ?? '',
+          phone: cred.user.phoneNumber ?? '',
+          photoURL: cred.user.photoURL ?? '',
+        });
+      } catch (firestoreError) {
+        console.warn('Firestore user creation failed:', firestoreError);
+      }
+
+      if (isNewAccount) {
+        const who = cred.user.displayName
+          ? `${cred.user.displayName} <${cred.user.email}>`
+          : cred.user.email;
+        this.n8n
+          .sendAdminAlert('user_registered', `${who} signed up with Google.`)
+          .catch(err => console.warn('Admin alert webhook failed:', err));
+      }
+
+      this.router.navigate(['/']);
+    } catch (e: any) {
+      this.error = googleAuthErrorMessage(e?.code);
+    } finally {
+      this.googleLoading = false;
       this.cdr.detectChanges();
     }
   }

@@ -35,6 +35,23 @@ export class UserService {
     });
   }
 
+  // Creates the profile only when one doesn't exist yet, for sign-in methods
+  // that can't tell a first-time signup from a repeat visit (OAuth). Calling
+  // createUser() unconditionally would be destructive: its setDoc has no
+  // merge, so a returning user would lose savedProperties and an admin/agent
+  // would be reset to role 'user'. Resolves true only when a new profile was
+  // written, so callers can treat that as "a new account just joined".
+  async ensureUserDocument(uid: string, data: Partial<User>): Promise<boolean> {
+    const ref = doc(this.firestore, this.collectionName, uid);
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      await setDoc(ref, { lastLoginAt: new Date() }, { merge: true });
+      return false;
+    }
+    await this.createUser(uid, data);
+    return true;
+  }
+
   updateUserProfile(uid: string, data: Partial<User>): Promise<void> {
     const ref = doc(this.firestore, this.collectionName, uid);
     return setDoc(ref, { ...data }, { merge: true });

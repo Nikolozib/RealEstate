@@ -13,6 +13,7 @@ import {
   passwordsMatchValidator,
   phoneValidator,
 } from '../../../core/utils/form-validators';
+import { googleAuthErrorMessage } from '../../../core/utils/auth-errors';
 
 @Component({
   selector: 'app-register',
@@ -25,6 +26,7 @@ export class Register implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
 
   loading = false;
+  googleLoading = false;
   error = '';
   showPassword = false;
   showConfirm = false;
@@ -151,6 +153,51 @@ export class Register implements OnInit, OnDestroy {
       // Angular's change-detection scheduler, so without this the UI would
       // only refresh once some unrelated event (a scroll, a click) happened
       // to trigger a tick elsewhere.
+      this.cdr.detectChanges();
+    }
+  }
+
+  // Google sign-in needs no verification step: the account is already
+  // emailVerified, so this goes straight home rather than into the
+  // link/code waiting screen the password flow uses.
+  async continueWithGoogle() {
+    if (this.googleLoading) return;
+
+    this.googleLoading = true;
+    this.error = '';
+    this.cdr.detectChanges();
+
+    try {
+      const cred = await this.authService.signInWithGoogle();
+
+      let isNewAccount = false;
+      try {
+        isNewAccount = await this.userService.ensureUserDocument(cred.user.uid, {
+          displayName: cred.user.displayName ?? '',
+          email: cred.user.email ?? '',
+          phone: cred.user.phoneNumber ?? '',
+          photoURL: cred.user.photoURL ?? '',
+        });
+      } catch (firestoreError) {
+        console.warn('Firestore user creation failed:', firestoreError);
+        this.profileWarning =
+          'Profile details could not be saved. You can complete them from Settings.';
+      }
+
+      if (isNewAccount) {
+        const who = cred.user.displayName
+          ? `${cred.user.displayName} <${cred.user.email}>`
+          : cred.user.email;
+        this.n8n
+          .sendAdminAlert('user_registered', `${who} signed up with Google.`)
+          .catch(err => console.warn('Admin alert webhook failed:', err));
+      }
+
+      this.router.navigate(['/']);
+    } catch (e: any) {
+      this.error = googleAuthErrorMessage(e?.code);
+    } finally {
+      this.googleLoading = false;
       this.cdr.detectChanges();
     }
   }

@@ -180,6 +180,21 @@ $transition:    all 0.3s ease;
     &:hover { color: $secondary; text-decoration: underline; }
   }
 
+  &__divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: $text-secondary;
+    font-size: 12px;
+
+    &::before, &::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: $border;
+    }
+  }
+
   &__terms {
     text-align: center;
     font-size: 12px;
@@ -359,6 +374,22 @@ $transition:    all 0.3s ease;
   }
 
   &--full { width: 100%; }
+
+  &--google {
+    background: $bg-card;
+    color: $text;
+    border: 1px solid $border;
+
+    i { color: #4285f4; font-size: 15px; }
+
+    &:hover:not(:disabled) {
+      background: $bg;
+      border-color: $text-secondary;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    }
+
+    &:disabled { opacity: 0.6; cursor: not-allowed; }
+  }
 
   &--ghost {
     background: transparent;
