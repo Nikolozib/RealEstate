@@ -16,9 +16,11 @@
         </p>
         <div class="footer__social">
           @for (social of socials; track social.label) {
-            <a [href]="social.url" target="_blank" rel="noopener"
+            <a [href]="social.url"
+               [attr.target]="social.external ? '_blank' : null"
+               [attr.rel]="social.external ? 'noopener' : null"
                class="footer__social-link" [attr.aria-label]="social.label">
-              <i [class]="social.icon"></i>
+              <i [class]="social.icon" aria-hidden="true"></i>
             </a>
           }
         </div>

@@ -54,8 +54,8 @@ export class Contact implements OnInit {
     {
       icon: 'fa-solid fa-envelope',
       label: 'Email',
-      value: 'info@realestate.ge',
-      href: 'mailto:info@realestate.ge',
+      value: 'bochoranika581@gmail.com',
+      href: 'mailto:bochoranika581@gmail.com',
     },
     { icon: 'fa-solid fa-clock', label: 'Working Hours', value: 'Mon – Sat, 9:00 – 18:00' },
   ];
