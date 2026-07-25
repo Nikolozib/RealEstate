@@ -1,15 +1,20 @@
 name: Keep n8n warm
 
 # Render's free tier spins the n8n instance down after ~15 min of no traffic.
-# This ping runs once daily rather than continuously, so it does not keep the
-# instance warm around the clock — cold starts (and the ~50-120s wait they
-# cause) still happen for real user traffic between pings. It only prevents
-# the instance from sitting fully idle for very long stretches. Pings the
-# plain root URL, not a real webhook, so it never creates fake leads or
-# wasted Pinecone lookups.
+#
+# Every 30 minutes is a deliberate middle ground, not full coverage: because
+# spin-down happens at ~15 min, the instance still sleeps between pings and
+# real visitors can still hit a cold start. It shortens the idle stretches
+# for roughly a third of the free-tier hours a */10 ping would burn (~240 of
+# 750/month, versus ~720 for round-the-clock). Tighten to */10 only if n8n is
+# the sole service in the Render account — a second service on top of a 24/7
+# instance would exhaust the free tier and suspend both.
+#
+# Hits /healthz (n8n's own health endpoint, returns {"status":"ok"}) rather
+# than a real webhook, so it never creates fake leads or Pinecone lookups.
 on:
   schedule:
-    - cron: '0 6 * * *'
+    - cron: '*/30 * * * *'
   workflow_dispatch: {}
 
 jobs:
@@ -17,4 +22,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping n8n
-        run: curl -sf --max-time 90 -o /dev/null "https://realsang-n8n.onrender.com/"
+        run: curl -sf --max-time 90 -o /dev/null "https://realsang-n8n.onrender.com/healthz"

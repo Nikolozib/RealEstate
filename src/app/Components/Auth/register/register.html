@@ -52,21 +52,6 @@
             </div>
           }
 
-          <button
-            type="button"
-            class="btn btn--google btn--full"
-            (click)="continueWithGoogle()"
-            [disabled]="googleLoading"
-          >
-            @if (googleLoading) {
-              <i class="fa-solid fa-spinner fa-spin"></i> Connecting…
-            } @else {
-              <i class="fa-brands fa-google"></i> Continue with Google
-            }
-          </button>
-
-          <div class="auth-card__divider"><span>or sign up with email</span></div>
-
           <form class="auth-card__form" [formGroup]="registerForm" (ngSubmit)="register()">
             <div class="form-group">
               <label class="form-label">Full Name <span class="form-required">*</span></label>
@@ -164,6 +149,21 @@
               }
             </button>
           </form>
+
+          <div class="auth-card__divider"><span>or</span></div>
+
+          <button
+            type="button"
+            class="btn btn--google btn--full"
+            (click)="continueWithGoogle()"
+            [disabled]="googleLoading"
+          >
+            @if (googleLoading) {
+              <i class="fa-solid fa-spinner fa-spin"></i> Connecting…
+            } @else {
+              <app-google-icon /> Continue with Google
+            }
+          </button>
 
           <p class="auth-card__terms">
             By creating an account you agree to our

@@ -7,11 +7,12 @@ import { N8nService } from '../../../core/services/n8n';
 import { SeoService } from '../../../core/services/seo';
 import { emailValidator } from '../../../core/utils/form-validators';
 import { googleAuthErrorMessage } from '../../../core/utils/auth-errors';
+import { GoogleIcon } from '../../shared/google-icon/google-icon';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [RouterLink, ReactiveFormsModule],
+  imports: [RouterLink, ReactiveFormsModule, GoogleIcon],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })

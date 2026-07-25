@@ -391,8 +391,6 @@ $transition:    all 0.3s ease;
     color: $text;
     border: 1px solid $border;
 
-    i { color: #4285f4; font-size: 15px; }
-
     &:hover:not(:disabled) {
       background: $bg;
       border-color: $text-secondary;

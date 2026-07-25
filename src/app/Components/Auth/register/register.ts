@@ -14,11 +14,12 @@ import {
   phoneValidator,
 } from '../../../core/utils/form-validators';
 import { googleAuthErrorMessage } from '../../../core/utils/auth-errors';
+import { GoogleIcon } from '../../shared/google-icon/google-icon';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [RouterLink, ReactiveFormsModule],
+  imports: [RouterLink, ReactiveFormsModule, GoogleIcon],
   templateUrl: './register.html',
   styleUrl: './register.scss',
 })

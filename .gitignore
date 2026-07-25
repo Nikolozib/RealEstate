@@ -42,3 +42,13 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Secrets — never commit these. Unlike the Firebase *web* config in
+# src/app/environment (public client identifiers, safe to commit), a service
+# account key grants full admin access to the whole Firebase project.
+serviceAccount*.json
+*firebase-adminsdk*.json
+*-service-account.json
+.env
+.env.*
+!.env.example
